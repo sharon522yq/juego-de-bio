@@ -1,0 +1,2152 @@
+<!DOCTYPE html>
+<html lang="es">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Juegos Interactivos COBIET</title>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.4.120/pdf.min.js"></script>
+    <style>
+        :root {
+            --blue-dark: #4e1044;
+            --blue-classic: #aa189ee7;
+            --blue-bright: #622380;
+            --gold: #f1b504;
+            --white: #ffffff;
+            --gray: #cccccc;
+            --danger: #d9534f;
+            --success: #5cb85c;
+            --rival-red: #8b0000;
+            --rival-accent: #c0392b;
+        }
+
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+            font-family: 'Arial', sans-serif;
+        }
+
+        body {
+            background-color: var(--blue-dark);
+            color: var(--white);
+            min-height: 100vh;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: flex-start;
+            padding: 20px;
+        }
+
+        header {
+            text-align: center;
+            margin-bottom: 20px;
+        }
+
+        header h1 {
+            color: var(--gold);
+            font-size: 2.5rem;
+            text-shadow: 2px 2px var(--blue-classic);
+            margin-bottom: 5px;
+        }
+
+        header p {
+            color: var(--gray);
+            font-style: italic;
+        }
+
+        .container {
+            width: 100%;
+            max-width: 1200px;
+            background: rgba(255, 255, 255, 0.05);
+            border-radius: 12px;
+            padding: 25px;
+            border: 1px solid rgba(241, 181, 4, 0.2);
+            position: relative;
+        }
+
+        /* ── BARRA DE CONTROL GLOBAL ── */
+        #global-nav {
+            display: none;
+            justify-content: flex-end;
+            gap: 10px;
+            margin-bottom: 15px;
+            width: 100%;
+            max-width: 1200px;
+        }
+
+        .nav-btn {
+            padding: 8px 14px;
+            font-size: 0.85rem;
+            font-weight: bold;
+            border-radius: 6px;
+            cursor: pointer;
+            border: none;
+            color: white;
+            transition: background 0.2s;
+        }
+
+        .nav-btn.btn-save {
+            background-color: var(--success);
+        }
+
+        .nav-btn.btn-admin {
+            background-color: #4a5568;
+        }
+
+        .nav-btn.btn-home {
+            background-color: var(--danger);
+        }
+
+        .nav-btn:hover {
+            opacity: 0.9;
+        }
+
+        /* ── GAME SELECTOR ── */
+        #game-selector {
+            display: block;
+        }
+
+        .selector-title {
+            color: var(--gold);
+            font-size: 1.5rem;
+            font-weight: bold;
+            text-align: center;
+            margin-bottom: 8px;
+        }
+
+        .selector-sub {
+            color: var(--gray);
+            text-align: center;
+            margin-bottom: 30px;
+            font-style: italic;
+        }
+
+        .game-cards {
+            display: flex;
+            gap: 20px;
+            justify-content: center;
+            flex-wrap: wrap;
+        }
+
+        .game-card {
+            flex: 1;
+            min-width: 260px;
+            max-width: 380px;
+            border-radius: 14px;
+            padding: 30px 24px;
+            cursor: pointer;
+            text-align: center;
+            transition: all 0.2s ease;
+            border: 3px solid transparent;
+        }
+
+        .game-card:hover {
+            transform: translateY(-4px);
+            border-color: var(--gold);
+        }
+
+        .game-card.jeopardy {
+            background: linear-gradient(145deg, #000080, #061437);
+        }
+
+        .game-card.rival {
+            background: linear-gradient(145deg, #5a0000, #1a0000);
+        }
+
+        .game-card .game-icon {
+            font-size: 3.5rem;
+            margin-bottom: 14px;
+        }
+
+        .game-card h2 {
+            font-size: 1.5rem;
+            font-weight: bold;
+            margin-bottom: 10px;
+        }
+
+        .game-card.jeopardy h2 {
+            color: var(--gold);
+        }
+
+        .game-card.rival h2 {
+            color: #ff6b6b;
+        }
+
+        .game-card p {
+            color: var(--gray);
+            font-size: 0.92rem;
+            line-height: 1.5;
+        }
+
+        .game-card .select-btn {
+            display: inline-block;
+            margin-top: 20px;
+            padding: 10px 24px;
+            border-radius: 8px;
+            font-weight: bold;
+            font-size: 1rem;
+        }
+
+        .game-card.jeopardy .select-btn {
+            background: var(--gold);
+            color: var(--blue-dark);
+        }
+
+        .game-card.rival .select-btn {
+            background: #c0392b;
+            color: white;
+        }
+
+        /* ── SETUP ── */
+        #setup-screen {
+            display: none;
+        }
+
+        .setup-back {
+            background: none;
+            border: none;
+            color: var(--gray);
+            cursor: pointer;
+            font-size: 0.9rem;
+            margin-bottom: 16px;
+            padding: 4px 0;
+        }
+
+        .setup-back:hover {
+            color: white;
+        }
+
+        .form-group {
+            margin-bottom: 20px;
+        }
+
+        label {
+            display: block;
+            margin-bottom: 8px;
+            color: var(--gold);
+            font-weight: bold;
+        }
+
+        input[type="text"],
+        input[type="password"],
+        textarea,
+        input[type="file"] {
+            width: 100%;
+            padding: 12px;
+            border-radius: 6px;
+            border: 2px solid var(--blue-classic);
+            background-color: #0b1d4f;
+            color: white;
+            font-size: 1rem;
+        }
+
+        input[type="text"]:focus,
+        input[type="password"]:focus,
+        textarea:focus {
+            border-color: var(--gold);
+            outline: none;
+        }
+
+        textarea {
+            height: 150px;
+            resize: vertical;
+        }
+
+        .btn {
+            background-color: var(--gold);
+            color: var(--blue-dark);
+            border: none;
+            padding: 12px 24px;
+            font-size: 1.1rem;
+            font-weight: bold;
+            border-radius: 6px;
+            cursor: pointer;
+            transition: all 0.2s ease;
+            width: 100%;
+        }
+
+        .btn:hover {
+            background-color: #ffca28;
+            transform: translateY(-2px);
+        }
+
+        .btn.rival-btn {
+            background-color: var(--rival-accent);
+            color: white;
+        }
+
+        .btn.rival-btn:hover {
+            background-color: #e74c3c;
+        }
+
+        /* ── LOADING ── */
+        #loading-screen {
+            display: none;
+            text-align: center;
+            padding: 40px 0;
+        }
+
+        .spinner {
+            border: 6px solid rgba(255, 255, 255, 0.1);
+            width: 60px;
+            height: 60px;
+            border-left-color: var(--gold);
+            border-radius: 50%;
+            animation: spin 1s linear infinite;
+            margin: 0 auto 20px auto;
+        }
+
+        @keyframes spin {
+            0% {
+                transform: rotate(0deg)
+            }
+
+            100% {
+                transform: rotate(360deg)
+            }
+        }
+
+        /* ── ADMIN ── */
+        #admin-screen {
+            display: none;
+        }
+
+        .admin-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 20px;
+            flex-wrap: wrap;
+            gap: 10px;
+        }
+
+        .admin-header h2 {
+            color: var(--gold);
+            font-size: 1.6rem;
+        }
+
+        .admin-header .btn {
+            width: auto;
+            padding: 10px 22px;
+        }
+
+        .admin-teams-row {
+            display: flex;
+            align-items: center;
+            gap: 15px;
+            margin-bottom: 25px;
+            padding: 15px;
+            background: rgba(17, 95, 251, 0.12);
+            border-radius: 8px;
+            border: 1px solid var(--blue-bright);
+            flex-wrap: wrap;
+        }
+
+        .admin-teams-row label {
+            color: var(--gold);
+            margin: 0;
+            white-space: nowrap;
+        }
+
+        .team-count-controls {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .team-count-controls button {
+            background: var(--blue-bright);
+            color: white;
+            border: none;
+            width: 32px;
+            height: 32px;
+            border-radius: 6px;
+            font-size: 1.2rem;
+            cursor: pointer;
+            font-weight: bold;
+        }
+
+        .team-count-controls button:hover {
+            background: var(--gold);
+            color: var(--blue-dark);
+        }
+
+        #team-count-display {
+            font-size: 1.4rem;
+            font-weight: bold;
+            color: var(--gold);
+            min-width: 30px;
+            text-align: center;
+        }
+
+        .category-block {
+            margin-bottom: 28px;
+            background: rgba(0, 0, 128, 0.25);
+            border-radius: 10px;
+            padding: 18px;
+            border: 1px solid rgba(241, 181, 4, 0.25);
+        }
+
+        .category-block h3 {
+            color: var(--gold);
+            margin-bottom: 14px;
+            font-size: 1.1rem;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            flex-wrap: wrap;
+        }
+
+        .cat-name-input {
+            background: #0b1d4f;
+            border: 1px solid var(--blue-bright);
+            color: white;
+            border-radius: 5px;
+            padding: 5px 10px;
+            font-size: 1rem;
+            font-weight: bold;
+            flex: 1;
+            min-width: 150px;
+        }
+
+        .cat-name-input:focus {
+            border-color: var(--gold);
+            outline: none;
+        }
+
+        .question-card {
+            background: #0b1d4f;
+            border: 1px solid #2d3748;
+            border-radius: 8px;
+            padding: 14px;
+            margin-bottom: 10px;
+        }
+
+        .question-card .pts-badge {
+            display: inline-block;
+            background: var(--gold);
+            color: var(--blue-dark);
+            font-weight: bold;
+            font-size: 0.85rem;
+            border-radius: 4px;
+            padding: 2px 8px;
+            margin-bottom: 10px;
+        }
+
+        .question-field {
+            margin-bottom: 8px;
+        }
+
+        .question-field label {
+            color: var(--gray);
+            font-size: 0.82rem;
+            font-weight: normal;
+            margin-bottom: 4px;
+        }
+
+        .question-field textarea {
+            height: 58px;
+            font-size: 0.92rem;
+            padding: 8px;
+        }
+
+        .options-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 8px;
+            margin-top: 4px;
+        }
+
+        .option-field label {
+            color: #a0aec0;
+            font-size: 0.78rem;
+            margin-bottom: 2px;
+        }
+
+        .option-field textarea {
+            height: 46px;
+            font-size: 0.88rem;
+            padding: 6px;
+        }
+
+        .correct-select {
+            background: #0b1d4f;
+            border: 1px solid var(--blue-classic);
+            color: white;
+            border-radius: 5px;
+            padding: 5px 10px;
+            font-size: 0.88rem;
+            margin-top: 6px;
+        }
+
+        .correct-select:focus {
+            border-color: var(--gold);
+            outline: none;
+        }
+
+        /* ── JEOPARDY GAME ── */
+        #game-screen {
+            display: none;
+            flex-direction: column;
+            gap: 20px;
+        }
+
+        .board {
+            display: grid;
+            gap: 15px;
+            background-color: #000;
+            padding: 15px;
+            border-radius: 8px;
+            border: 3px solid var(--gold);
+        }
+
+        .cat-header {
+            background-color: var(--blue-classic);
+            color: var(--white);
+            font-weight: bold;
+            text-transform: uppercase;
+            text-align: center;
+            padding: 15px 5px;
+            border: 2px solid var(--blue-bright);
+            font-size: 1.1rem;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            min-height: 70px;
+            box-shadow: inset 0 0 10px rgba(0, 0, 0, 0.5);
+        }
+
+        .cell-card {
+            background-color: var(--blue-classic);
+            color: var(--gold);
+            font-size: 1.8rem;
+            font-weight: bold;
+            text-align: center;
+            padding: 25px 10px;
+            border: 2px solid var(--blue-bright);
+            cursor: pointer;
+            user-select: none;
+            transition: all 0.2s ease;
+            box-shadow: inset 0 0 15px rgba(0, 0, 0, 0.5);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .cell-card:hover {
+            background-color: var(--blue-bright);
+            color: var(--white);
+            transform: scale(1.02);
+        }
+
+        .cell-card.disabled {
+            background-color: #1a2536;
+            color: #4a5568;
+            border-color: #2d3748;
+            cursor: not-allowed;
+            transform: none;
+            box-shadow: none;
+        }
+
+        .scoreboard {
+            display: flex;
+            justify-content: space-around;
+            flex-wrap: wrap;
+            gap: 15px;
+            margin-top: 10px;
+            padding-top: 15px;
+            border-top: 2px solid rgba(241, 181, 4, 0.3);
+        }
+
+        .team-score {
+            background: #0b1d4f;
+            border: 2px solid var(--blue-bright);
+            border-radius: 8px;
+            padding: 15px;
+            text-align: center;
+            min-width: 180px;
+        }
+
+        .team-score h3 {
+            color: var(--white);
+            margin-bottom: 5px;
+            font-size: 1.2rem;
+        }
+
+        .score-val {
+            font-size: 2rem;
+            font-weight: bold;
+            color: var(--gold);
+            margin-bottom: 10px;
+        }
+
+        .score-ctrls {
+            display: flex;
+            gap: 10px;
+            justify-content: center;
+        }
+
+        .btn-sm {
+            padding: 6px 12px;
+            font-weight: bold;
+            border: none;
+            border-radius: 4px;
+            cursor: pointer;
+        }
+
+        .btn-plus {
+            background-color: var(--success);
+            color: white;
+        }
+
+        .btn-minus {
+            background-color: var(--danger);
+            color: white;
+        }
+
+        /* ── JEOPARDY MODAL ── */
+        .modal {
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background-color: rgba(0, 0, 0, 0.92);
+            z-index: 1000;
+            align-items: center;
+            justify-content: center;
+            padding: 20px;
+        }
+
+        .modal-content {
+            background-color: var(--blue-classic);
+            border: 4px solid var(--gold);
+            border-radius: 12px;
+            width: 100%;
+            max-width: 800px;
+            padding: 30px;
+            text-align: center;
+            position: relative;
+            box-shadow: 0 0 30px rgba(241, 181, 4, 0.4);
+        }
+
+        .modal-points {
+            color: var(--gold);
+            font-size: 1.5rem;
+            font-weight: bold;
+            margin-bottom: 15px;
+        }
+
+        .modal-clue {
+            font-size: 2rem;
+            line-height: 1.4;
+            margin-bottom: 30px;
+            font-weight: bold;
+        }
+
+        .modal-answer {
+            font-size: 1.6rem;
+            color: #a3e635;
+            margin-bottom: 30px;
+            padding: 15px;
+            background: rgba(0, 0, 0, 0.3);
+            border-radius: 6px;
+            display: none;
+            font-style: italic;
+        }
+
+        .timer-container {
+            width: 100%;
+            background-color: #2d3748;
+            height: 14px;
+            border-radius: 7px;
+            margin-bottom: 12px;
+            overflow: hidden;
+        }
+
+        .timer-bar {
+            width: 100%;
+            height: 100%;
+            background-color: var(--gold);
+            transition: width 1s linear;
+        }
+
+        .timer-label {
+            font-size: 0.9rem;
+            color: var(--gray);
+            margin-bottom: 20px;
+        }
+
+        .modal-actions {
+            display: flex;
+            flex-direction: column;
+            gap: 15px;
+        }
+
+        .modal-row {
+            display: flex;
+            gap: 10px;
+            justify-content: center;
+            flex-wrap: wrap;
+        }
+
+        .btn-modal {
+            padding: 10px 20px;
+            font-weight: bold;
+            border: none;
+            border-radius: 4px;
+            cursor: pointer;
+        }
+
+        .btn-reveal {
+            background-color: var(--gold);
+            color: var(--blue-dark);
+            width: 100%;
+            font-size: 1.1rem;
+        }
+
+        .btn-close-modal {
+            background-color: #4a5568;
+            color: white;
+            width: 100%;
+        }
+
+        .team-assign-btn {
+            background-color: var(--blue-dark);
+            color: white;
+            border: 1px solid var(--blue-bright);
+            padding: 8px 15px;
+            border-radius: 4px;
+            cursor: pointer;
+        }
+
+        .team-assign-btn:hover {
+            background-color: var(--blue-bright);
+        }
+
+        /* ── RIVAL MÁS DÉBIL ── */
+        #rival-screen {
+            display: none;
+            flex-direction: column;
+            gap: 0;
+        }
+
+        .rival-header {
+            background: linear-gradient(180deg, #1a0000 0%, #3d0000 100%);
+            border: 2px solid #8b0000;
+            border-radius: 10px 10px 0 0;
+            padding: 18px 24px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            flex-wrap: wrap;
+            gap: 10px;
+        }
+
+        .rival-header h2 {
+            color: #ff6b6b;
+            font-size: 1.5rem;
+            letter-spacing: 2px;
+        }
+
+        .rival-bote {
+            text-align: center;
+        }
+
+        .rival-bote .bote-label {
+            color: var(--gray);
+            font-size: 0.85rem;
+        }
+
+        .rival-bote .bote-val {
+            color: var(--gold);
+            font-size: 2rem;
+            font-weight: bold;
+        }
+
+        .rival-ronda-info {
+            color: var(--gray);
+            font-size: 0.9rem;
+            text-align: right;
+        }
+
+        .rival-ronda-info strong {
+            color: white;
+        }
+
+        .rival-body {
+            background: #0d0000;
+            border-left: 2px solid #8b0000;
+            border-right: 2px solid #8b0000;
+            padding: 24px;
+        }
+
+        /* Jugadores */
+        .rival-players {
+            display: flex;
+            justify-content: center;
+            flex-wrap: wrap;
+            gap: 12px;
+            margin-bottom: 24px;
+        }
+
+        .rival-player {
+            background: #1a0a0a;
+            border: 2px solid #4a0000;
+            border-radius: 10px;
+            padding: 12px 16px;
+            text-align: center;
+            min-width: 110px;
+            transition: all 0.3s;
+            position: relative;
+        }
+
+        .rival-player.activo {
+            border-color: var(--gold);
+            background: #2a1000;
+            box-shadow: 0 0 12px rgba(241, 181, 4, 0.3);
+        }
+
+        .rival-player.eliminado {
+            opacity: 0.3;
+            border-color: #333;
+            filter: grayscale(1);
+        }
+
+        .rival-player .player-name {
+            font-weight: bold;
+            font-size: 0.95rem;
+            margin-bottom: 4px;
+        }
+
+        .rival-player .player-correct {
+            font-size: 0.8rem;
+            color: var(--success);
+        }
+
+        .rival-player .player-wrong {
+            font-size: 0.8rem;
+            color: var(--danger);
+        }
+
+        .rival-player .turno-badge {
+            position: absolute;
+            top: -10px;
+            left: 50%;
+            transform: translateX(-50%);
+            background: var(--gold);
+            color: var(--blue-dark);
+            font-size: 0.7rem;
+            font-weight: bold;
+            border-radius: 4px;
+            padding: 1px 6px;
+            white-space: nowrap;
+        }
+
+        /* Pregunta rival */
+        .rival-question-box {
+            background: #1a0505;
+            border: 2px solid #6b0000;
+            border-radius: 10px;
+            padding: 24px;
+            text-align: center;
+            margin-bottom: 20px;
+        }
+
+        .rival-q-num {
+            color: #ff6b6b;
+            font-size: 0.85rem;
+            font-weight: bold;
+            margin-bottom: 10px;
+            letter-spacing: 1px;
+        }
+
+        .rival-q-text {
+            font-size: 1.5rem;
+            font-weight: bold;
+            line-height: 1.4;
+            margin-bottom: 20px;
+        }
+
+        .rival-options {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 12px;
+        }
+
+        .rival-opt-btn {
+            padding: 14px 10px;
+            border-radius: 8px;
+            border: 2px solid #6b0000;
+            background: #2a0505;
+            color: white;
+            font-size: 1rem;
+            font-weight: bold;
+            cursor: pointer;
+            transition: all 0.2s;
+            text-align: left;
+        }
+
+        .rival-opt-btn:hover:not(:disabled) {
+            border-color: var(--gold);
+            background: #3a1010;
+        }
+
+        .rival-opt-btn.correct {
+            border-color: var(--success);
+            background: #0a2a0a;
+            color: #a3e635;
+        }
+
+        .rival-opt-btn.wrong {
+            border-color: var(--danger);
+            background: #2a0a0a;
+            color: #ff6b6b;
+        }
+
+        .rival-opt-btn:disabled {
+            cursor: default;
+        }
+
+        .rival-opt-letter {
+            display: inline-block;
+            background: #6b0000;
+            color: white;
+            border-radius: 4px;
+            padding: 1px 7px;
+            margin-right: 8px;
+            font-size: 0.85rem;
+        }
+
+        /* Controles admin rival */
+        .rival-admin-controls {
+            display: flex;
+            gap: 10px;
+            flex-wrap: wrap;
+            justify-content: center;
+            margin-bottom: 20px;
+        }
+
+        .rival-ctrl-btn {
+            padding: 10px 18px;
+            border-radius: 7px;
+            border: none;
+            font-weight: bold;
+            cursor: pointer;
+            font-size: 0.95rem;
+            transition: all 0.2s;
+        }
+
+        .btn-banco {
+            background: var(--gold);
+            color: var(--blue-dark);
+        }
+
+        .btn-banco:hover {
+            background: #ffca28;
+        }
+
+        .btn-correcto {
+            background: var(--success);
+            color: white;
+        }
+
+        .btn-correcto:hover {
+            background: #4cae4c;
+        }
+
+        .btn-incorrecto {
+            background: var(--danger);
+            color: white;
+        }
+
+        .btn-incorrecto:hover {
+            background: #c9302c;
+        }
+
+        .btn-sig-turno {
+            background: var(--blue-bright);
+            color: white;
+        }
+
+        .btn-sig-turno:hover {
+            background: #0d4fd6;
+        }
+
+        /* overlays */
+        .rival-elim-overlay {
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0, 0, 0, 0.95);
+            z-index: 2000;
+            align-items: center;
+            justify-content: center;
+            flex-direction: column;
+            text-align: center;
+            padding: 30px;
+        }
+
+        .rival-elim-overlay.show {
+            display: flex;
+        }
+
+        .elim-title {
+            color: #ff6b6b;
+            font-size: 2.5rem;
+            font-weight: bold;
+            letter-spacing: 3px;
+            margin-bottom: 20px;
+            text-shadow: 0 0 20px #ff0000;
+        }
+
+        .elim-name {
+            color: white;
+            font-size: 3rem;
+            font-weight: bold;
+            margin-bottom: 10px;
+        }
+
+        .elim-frase {
+            color: var(--gray);
+            font-size: 1.3rem;
+            font-style: italic;
+            margin-bottom: 30px;
+        }
+
+        .elim-continue {
+            background: var(--danger);
+            color: white;
+            border: none;
+            padding: 14px 32px;
+            border-radius: 8px;
+            font-size: 1.1rem;
+            font-weight: bold;
+            cursor: pointer;
+        }
+
+        .elim-continue:hover {
+            background: #c0392b;
+        }
+
+        .winner-overlay {
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0, 0, 0, 0.97);
+            z-index: 2000;
+            align-items: center;
+            justify-content: center;
+            flex-direction: column;
+            text-align: center;
+            padding: 30px;
+        }
+
+        .winner-overlay.show {
+            display: flex;
+        }
+
+        .winner-title {
+            color: var(--gold);
+            font-size: 2rem;
+            font-weight: bold;
+            margin-bottom: 16px;
+        }
+
+        .winner-name {
+            color: white;
+            font-size: 3.5rem;
+            font-weight: bold;
+            margin-bottom: 10px;
+        }
+
+        .winner-prize {
+            color: var(--gold);
+            font-size: 2rem;
+            margin-bottom: 30px;
+        }
+
+        .winner-restart {
+            background: var(--gold);
+            color: var(--blue-dark);
+            border: none;
+            padding: 14px 32px;
+            border-radius: 8px;
+            font-size: 1.1rem;
+            font-weight: bold;
+            cursor: pointer;
+        }
+
+        /* Cadena en rival */
+        .cadena-row {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 4px;
+            margin-bottom: 16px;
+            flex-wrap: wrap;
+        }
+
+        .cadena-slot {
+            width: 28px;
+            height: 28px;
+            border-radius: 50%;
+            border: 2px solid #6b0000;
+            background: #1a0000;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 0.7rem;
+            font-weight: bold;
+        }
+
+        .cadena-slot.lleno {
+            background: var(--gold);
+            border-color: var(--gold);
+            color: var(--blue-dark);
+        }
+
+        .cadena-slot.banked {
+            background: var(--success);
+            border-color: var(--success);
+            color: white;
+        }
+
+        .cadena-sep {
+            color: #6b0000;
+            font-weight: bold;
+        }
+    </style>
+</head>
+
+<body>
+
+    <header>
+        <h1>Juegos interactivos COBIET</h1>
+        <br>
+        <img src="1.cobiet.jpg.jpeg" width="150" height="150" alt="Logo">
+    </header>
+
+    <div id="global-nav">
+        <button class="nav-btn btn-save" onclick="guardarPartida()">💾 Guardar Partida</button>
+        <button class="nav-btn btn-admin" onclick="irAlAdminMapeo()">⚙️ Panel Admin</button>
+        <button class="nav-btn btn-home" onclick="irAlInicio()">🏠 Inicio</button>
+    </div>
+
+    <div class="container">
+
+        <div id="game-selector">
+            <p class="selector-title">¿Qué juego deseas jugar?</p>
+            <div class="game-cards">
+                <div class="game-card jeopardy" onclick="seleccionarJuego('jeopardy')">
+                    <div class="game-icon">🎯</div>
+                    <h2>JEOPARDY</h2>
+                    <p>Tablero de categorías y puntajes. Los equipos eligen preguntas y acumulan puntos respondiendo
+                        correctamente.</p>
+                    <span class="select-btn">¡Jugar Jeopardy!</span>
+                </div>
+                <div class="game-card rival" onclick="seleccionarJuego('rival')">
+                    <div class="game-icon">🔴</div>
+                    <h2>EL RIVAL MÁS DÉBIL</h2>
+                    <p>Rondas dinámicas adaptativas según aforo. Soporta hasta 40 jugadores con un sistema inteligente
+                        de descarte automático por fallas.</p>
+                    <span class="select-btn">¡Jugar El Rival!</span>
+                </div>
+            </div>
+            <button id="btn-resume-game" class="btn"
+                style="display:none; max-width:340px; margin:25px auto 0 auto; background-color:var(--success); color:white;">📂
+                Reanudar Partida Anterior</button>
+        </div>
+
+        <div id="setup-screen">
+            <button class="setup-back" onclick="volverSelector()">← Cambiar juego</button>
+            <div id="setup-game-label" style="color:var(--gold);font-size:1.2rem;font-weight:bold;margin-bottom:18px;">
+            </div>
+            <div class="form-group">
+                <label for="api-key">Gemini API Key</label>
+                <input type="password" id="api-key" placeholder="Pega tu API Key de Google AI Studio">
+                <small style="color:var(--gray);display:block;margin-top:5px;">Tu clave no se guarda en ningún
+                    servidor.</small>
+            </div>
+            <div class="form-group">
+                <label for="file-input">Cargar Archivo (PDF o TXT)</label>
+                <input type="file" id="file-input" accept=".pdf,.txt">
+            </div>
+            <div class="form-group">
+                <label for="text-input">O pega el texto informativo directamente aquí</label>
+                <textarea id="text-input" placeholder="Pega aquí el contenido temático..."></textarea>
+            </div>
+            <button class="btn" id="generate-btn">¡PROCESAR E INICIAR!</button>
+        </div>
+
+        <div id="loading-screen">
+            <div class="spinner"></div>
+            <h2>La IA está generando las preguntas...</h2>
+            <p style="margin-top:10px;color:var(--gray);">Esto puede tardar unos segundos.</p>
+        </div>
+
+        <div id="admin-screen">
+            <div class="admin-header">
+                <h2>⚙️ Panel del Administrador — Jeopardy</h2>
+                <button class="btn" onclick="iniciarJuego()">▶ INICIAR JUEGO</button>
+            </div>
+            <div class="admin-teams-row">
+                <label>Número de equipos:</label>
+                <div class="team-count-controls">
+                    <button onclick="cambiarEquipos(-1)">−</button>
+                    <span id="team-count-display">3</span>
+                    <button onclick="cambiarEquipos(1)">+</button>
+                </div>
+                <small style="color:var(--gray);margin-left:10px;">Mín: 1 | Máx: 8</small>
+            </div>
+            <div id="admin-categories"></div>
+        </div>
+
+        <div id="game-screen">
+            <div class="board" id="board-grid"></div>
+            <div class="scoreboard" id="scoreboard-row"></div>
+        </div>
+
+        <div id="admin-rival-screen" style="display:none;">
+            <div class="admin-header">
+                <h2>⚙️ Panel del Administrador — El Rival Más Débil</h2>
+                <button class="btn rival-btn" onclick="iniciarRival()">▶ INICIAR JUEGO</button>
+            </div>
+            <div class="admin-teams-row">
+                <label>Número de jugadores:</label>
+                <div class="team-count-controls">
+                    <button onclick="cambiarJugadoresRival(-1)">−</button>
+                    <span id="rival-player-count-display">20</span>
+                    <button onclick="cambiarJugadoresRival(1)">+</button>
+                </div>
+                <button class="nav-btn btn-save" style="background:#622380; margin-left:15px;"
+                    onclick="autogenerarNombresRival()">✨ Autogenerar Nombres</button>
+                <small style="color:var(--gray);margin-left:10px;">Mín: 3 | Máx: 40</small>
+            </div>
+            <div id="rival-player-names-list" style="margin-bottom:24px;"></div>
+            <div class="admin-header" style="margin-top:10px;">
+                <h3 style="color:var(--gold);">📋 Preguntas generadas (editables)</h3>
+            </div>
+            <div id="admin-rival-questions"></div>
+        </div>
+
+        <div id="rival-screen">
+            <div class="rival-header">
+                <h2>🔴 EL RIVAL MÁS DÉBIL</h2>
+                <div style="display:none;"></div> 
+                <div class="rival-ronda-info">
+                    Ronda <strong id="rival-ronda-num">1</strong><br>
+                    Pregunta <strong id="rival-q-num-disp">1</strong> / <strong id="rival-q-total">—</strong>
+                </div>
+            </div>
+            <div class="rival-body">
+                
+                <div class="rival-players" id="rival-players-row"></div>
+                <div class="rival-question-box" id="rival-q-box">
+                    <div class="rival-q-num" id="rival-q-label">PREGUNTA 1</div>
+                    <div class="rival-q-text" id="rival-q-text">—</div>
+                    <div class="rival-options" id="rival-q-options"></div>
+                </div>
+                <div class="rival-admin-controls">
+                    
+                    <button class="rival-ctrl-btn btn-correcto" onclick="rivalRespuesta(true)">✓ CORRECTO</button>
+                    <button class="rival-ctrl-btn btn-incorrecto" onclick="rivalRespuesta(false)">✗ INCORRECTO</button>
+                    <button class="rival-ctrl-btn btn-sig-turno" id="btn-sig-turno" onclick="rivalSiguienteTurno()"
+                        style="display:none;">→ SIGUIENTE TURNO</button>
+                </div>
+            </div>
+        </div>
+
+    </div>
+
+    <div class="modal" id="clue-modal">
+        <div class="modal-content">
+            <div class="modal-points" id="modal-title-pts">—</div>
+            <div class="modal-clue" id="modal-clue-text">—</div>
+            <div class="timer-container">
+                <div class="timer-bar" id="modal-timer"></div>
+            </div>
+            <div class="timer-label" id="timer-label">⏱ 30 segundos</div>
+            <div class="modal-answer" id="modal-answer-text"></div>
+            <div class="modal-actions">
+                <button class="btn-modal btn-reveal" id="btn-reveal-ans">REVELAR RESPUESTA CORRECTA</button>
+                <div class="modal-row" style="margin-top:10px;" id="assign-btns-row"></div>
+                <button class="btn-modal btn-close-modal" onclick="closeModal()" style="margin-top:15px;">CERRAR
+                    VENTANA</button>
+            </div>
+        </div>
+    </div>
+
+    <div class="rival-elim-overlay" id="elim-overlay">
+        <div class="elim-title">SISTEMA AUTOMÁTICO DE DESCARTE</div>
+        <div class="elim-name" id="elim-name-display">—</div>
+        <div class="elim-frase" id="elim-reason-display">"¡Ha cometido un error crítico y queda fuera!"</div>
+        <button class="elim-continue" onclick="cerrarEliminado()">CONTINUAR JUEGO →</button>
+    </div>
+
+    <div class="winner-overlay" id="winner-overlay">
+        <div class="winner-title">🏆 ¡GANADOR INDISCUTIBLE DE BIOÉTICA!</div>
+        <div class="winner-name" id="winner-name-display">—</div>
+        <div class="winner-prize" id="winner-prize-display">$0</div>
+        <button class="winner-restart" onclick="location.reload()">JUGAR DE NUEVO</button>
+    </div>
+
+    <script>
+        pdfjsLib.GlobalWorkerOptions.workerSrc = 'https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.4.120/pdf.worker.min.js';
+
+        let TIMER_SECONDS = 30;
+        let modoJuego = null;
+        let juegoDatos = null;
+        
+        
+
+
+        // Jeopardy
+        let numEquipos = 3;
+        let activeCardValue = 0;
+        let timerInterval = null;
+        let timerCountdown = null;
+        let currentScores = {};
+
+        // Rival Adaptado (Max 40 jugadores)
+        let rivalJugadores = [];
+        let rivalNumJugadores = 20;
+        let rivalTurnoIdx = 0;
+        let rivalRonda = 1;
+
+        
+        
+        let rivalQIdx = 0;
+        let rivalRespuestaRevelada = false;
+        let rivalPreguntas = [];
+        let vueltasDeRondaActual = 0;
+        let preguntasRespondidasEnEsteCiclo = 0;
+        let preguntasObjetivoRonda = 0;
+
+        window.addEventListener('DOMContentLoaded', () => {
+            inyectarEstilosGatitos();
+            if (localStorage.getItem('cobiet_savegame') && localStorage.getItem('cobiet_juegodatos')) {
+                const btnResume = document.getElementById('btn-resume-game');
+                btnResume.style.display = 'block';
+                btnResume.onclick = reanudarPartida;
+            }
+        });
+
+        function seleccionarJuego(modo) {
+            modoJuego = modo;
+            document.getElementById('game-selector').style.display = 'none';
+            const lbl = document.getElementById('setup-game-label');
+            lbl.textContent = modo === 'jeopardy' ? '🎯 Modo: Jeopardy' : '🔴 Modo: El Rival Más Débil (Hasta 40 Jugadores)';
+            const btn = document.getElementById('generate-btn');
+            btn.className = modo === 'rival' ? 'btn rival-btn' : 'btn';
+            document.getElementById('setup-screen').style.display = 'block';
+        }
+
+        function volverSelector() {
+            document.getElementById('setup-screen').style.display = 'none';
+            document.getElementById('game-selector').style.display = 'block';
+        }
+
+        document.getElementById('generate-btn').addEventListener('click', async () => {
+            const apiKey = document.getElementById('api-key').value.trim();
+            const fileInput = document.getElementById('file-input').files[0];
+            const textInput = document.getElementById('text-input').value.trim();
+
+            if (!apiKey) { alert('Por favor ingresa tu Gemini API Key.'); return; }
+            if (!fileInput && !textInput) { alert('Por favor carga un archivo o pega texto.'); return; }
+
+            document.getElementById('setup-screen').style.display = 'none';
+            document.getElementById('loading-screen').style.display = 'block';
+
+            try {
+                let texto = textInput;
+                if (fileInput) {
+                    texto = (fileInput.type === 'application/pdf' || fileInput.name.endsWith('.pdf'))
+                        ? await extraerTextoPDF(fileInput)
+                        : await fileInput.text();
+                }
+                if (!texto || texto.trim().length < 20) throw new Error('El texto extraído es demasiado corto.');
+
+                if (modoJuego === 'jeopardy') {
+                    juegoDatos = await consultarGeminiJeopardy(apiKey, texto);
+                    localStorage.setItem('cobiet_juegodatos', JSON.stringify(juegoDatos));
+                    document.getElementById('loading-screen').style.display = 'none';
+                    mostrarAdmin();
+                } else {
+                    juegoDatos = await consultarGeminiRival(apiKey, texto);
+                    localStorage.setItem('cobiet_juegodatos', JSON.stringify(juegoDatos));
+                    rivalPreguntas = juegoDatos.preguntas;
+                    document.getElementById('loading-screen').style.display = 'none';
+                    mostrarAdminRival();
+                }
+            } catch (e) {
+                alert('Error al procesar: ' + e.message);
+                document.getElementById('loading-screen').style.display = 'none';
+                document.getElementById('setup-screen').style.display = 'block';
+            }
+        });
+
+        async function extraerTextoPDF(file) {
+            const arrayBuffer = await file.arrayBuffer();
+            const pdf = await pdfjsLib.getDocument({ data: arrayBuffer }).promise;
+            let texto = '';
+            for (let i = 1; i <= pdf.numPages; i++) {
+                const page = await pdf.getPage(i);
+                const content = await page.getTextContent();
+                texto += content.items.map(it => it.str).join(' ') + '\n';
+            }
+            return texto;
+        }
+        // ════════════════════════════════════════
+        //  LLAMADAS API GEMINI CORREGIDAS (v1beta + gemini-2.5-flash)
+        // ════════════════════════════════════════
+        async function consultarGeminiJeopardy(apiKey, datosTexto) {
+            // Forzamos el uso de v1beta para que acepte responseSchema perfectamente
+            const endpoint = `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent?key=${apiKey}`;
+
+            const prompt = `Genera un juego completo estilo Jeopardy basado en el siguiente texto.\n` +
+                `REGLAS: Genera exactamente 4 categorías temáticas, cada una con exactamente 5 preguntas con puntajes 100,200,300,400,500.\n` +
+                `La "pista" es una afirmación o definición extraída del texto. La "respuesta" DEBE formularse como pregunta (ej: ¿Qué es...?, ¿Quién es...?, etc.).\n` +
+                `Devuelve SOLO el objeto JSON solicitado.\n\nTexto:\n${datosTexto}`;
+
+            const body = {
+                contents: [{ parts: [{ text: prompt }] }],
+                generationConfig: {
+                    responseMimeType: 'application/json',
+                    temperature: 0.1, // Temperatura baja para evitar respuestas redundantes o alucinaciones
+                    responseSchema: {
+                        type: 'OBJECT',
+                        properties: {
+                            categorias: {
+                                type: 'ARRAY',
+                                items: {
+                                    type: 'OBJECT',
+                                    properties: {
+                                        nombre: { type: 'STRING' },
+                                        preguntas: {
+                                            type: 'ARRAY',
+                                            items: {
+                                                type: 'OBJECT',
+                                                properties: {
+                                                    puntos: { type: 'NUMBER' },
+                                                    pista: { type: 'STRING' },
+                                                    respuesta: { type: 'STRING' }
+                                                },
+                                                required: ['puntos', 'pista', 'respuesta']
+                                            }
+                                        }
+                                    },
+                                    required: ['nombre', 'preguntas']
+                                }
+                            }
+                        },
+                        required: ['categorias']
+                    }
+                }
+            };
+            return await llamarGemini(endpoint, body);
+        }
+
+        async function consultarGeminiRival(apiKey, datosTexto) {
+            const endpoint = `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent?key=${apiKey}`;
+
+            // Reducimos a 20 preguntas para evitar que el tamaño del JSON de salida sature tu cuota gratuita de tokens
+            const prompt = `Genera preguntas para el juego "El Rival Más Débil" basadas en el siguiente texto.\n` +
+                `REGLAS:\n- Genera exactamente 20 preguntas de opción múltiple basadas estrictamente en el texto.\n` +
+                `- Cada pregunta tiene un enunciado y exactamente 4 opciones (A, B, C, D).\n` +
+                `- Solo UNA opción es correcta. Indica cuál con el campo "correcta" que debe ser "A", "B", "C" o "D".\n` +
+                `Devuelve SOLO el objeto JSON solicitado.\n\nTexto:\n${datosTexto}`;
+
+            const body = {
+                contents: [{ parts: [{ text: prompt }] }],
+                generationConfig: {
+                    responseMimeType: 'application/json',
+                    temperature: 0.1,
+                    responseSchema: {
+                        type: 'OBJECT',
+                        properties: {
+                            preguntas: {
+                                type: 'ARRAY',
+                                items: {
+                                    type: 'OBJECT',
+                                    properties: {
+                                        pregunta: { type: 'STRING' },
+                                        A: { type: 'STRING' },
+                                        B: { type: 'STRING' },
+                                        C: { type: 'STRING' },
+                                        D: { type: 'STRING' },
+                                        correcta: { type: 'STRING' }
+                                    },
+                                    required: ['pregunta', 'A', 'B', 'C', 'D', 'correcta']
+                                }
+                            }
+                        },
+                        required: ['preguntas']
+                    }
+                }
+            };
+            return await llamarGemini(endpoint, body);
+        }
+
+        async function llamarGemini(endpoint, body) {
+            const response = await fetch(endpoint, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify(body)
+            });
+
+            if (!response.ok) {
+                const err = await response.json();
+                // Si la API nos devuelve un error de cuota o formato, lo capturamos limpio aquí
+                throw new Error(err.error?.message || 'Error de conexión con Gemini.');
+            }
+
+            const data = await response.json();
+
+            try {
+                const part = data.candidates[0].content.parts[0];
+                if (part.text) {
+                    // Limpiamos posibles marcas de bloques de código markdown que a veces introduce la IA
+                    const jsonLimpio = part.text.replace(/```json|```/g, '').trim();
+                    return JSON.parse(jsonLimpio);
+                }
+            } catch (parseError) {
+                console.error("Error al procesar la respuesta de la IA:", data);
+                throw new Error('La IA no devolvió la estructura de datos esperada. Intenta de nuevo.');
+            }
+
+            throw new Error('La IA no devolvió un JSON de datos válido.');
+        }
+
+        // ════════════════════════════════════════
+        //  ADMINISTRACIÓN Y PANEL DE CONTROL
+        // ════════════════════════════════════════
+        function mostrarAdmin() {
+            document.getElementById('team-count-display').textContent = numEquipos;
+            renderizarAdmin();
+            document.getElementById('admin-screen').style.display = 'block';
+            document.getElementById('global-nav').style.display = 'flex';
+        }
+
+        function cambiarEquipos(delta) {
+            numEquipos = Math.min(8, Math.max(1, numEquipos + delta));
+            document.getElementById('team-count-display').textContent = numEquipos;
+        }
+
+        function renderizarAdmin() {
+            const container = document.getElementById('admin-categories');
+            container.innerHTML = '';
+            juegoDatos.categorias.forEach((cat, catIdx) => {
+                const block = document.createElement('div');
+                block.className = 'category-block';
+                block.innerHTML = `<h3>📂 Categoría ${catIdx + 1}: <input class="cat-name-input" data-cat="${catIdx}" value="${escHtml(cat.nombre)}"></h3><div id="pcat-${catIdx}"></div>`;
+                block.querySelector('.cat-name-input').addEventListener('input', e => { juegoDatos.categorias[catIdx].nombre = e.target.value; });
+                const pregC = block.querySelector(`#pcat-${catIdx}`);
+                cat.preguntas.forEach((preg, pIdx) => {
+                    const qc = document.createElement('div');
+                    qc.className = 'question-card';
+                    qc.innerHTML = `<span class="pts-badge">${preg.puntos}</span>
+                <div class="question-field"><label>Pista</label><textarea data-cat="${catIdx}" data-preg="${pIdx}" data-field="pista">${escHtml(preg.pista)}</textarea></div>
+                <div class="question-field"><label>Respuesta</label><textarea data-cat="${catIdx}" data-preg="${pIdx}" data-field="respuesta">${escHtml(preg.respuesta)}</textarea></div>`;
+                    qc.querySelectorAll('textarea').forEach(ta => ta.addEventListener('input', e => {
+                        juegoDatos.categorias[+e.target.dataset.cat].preguntas[+e.target.dataset.preg][e.target.dataset.field] = e.target.value;
+                    }));
+                    pregC.appendChild(qc);
+                });
+                container.appendChild(block);
+            });
+        }
+
+        function mostrarAdminRival() {
+            document.getElementById('rival-player-count-display').textContent = rivalNumJugadores;
+            renderizarNombresRival();
+            renderizarPreguntasRival();
+            document.getElementById('admin-rival-screen').style.display = 'block';
+            document.getElementById('global-nav').style.display = 'flex';
+        }
+
+        function cambiarJugadoresRival(delta) {
+            rivalNumJugadores = Math.min(40, Math.max(3, rivalNumJugadores + delta));
+            document.getElementById('rival-player-count-display').textContent = rivalNumJugadores;
+            renderizarNombresRival();
+        }
+
+        function autogenerarNombresRival() {
+            for (let i = 0; i < rivalNumJugadores; i++) {
+                const input = document.getElementById(`rp-name-${i}`);
+                if (input && input.value.trim() === '') {
+                    input.value = `Participante ${i + 1}`;
+                }
+            }
+        }
+
+        function renderizarNombresRival() {
+            const list = document.getElementById('rival-player-names-list');
+            list.innerHTML = '<label style="color:var(--gold);margin-bottom:10px;display:block;">Configure nombres (o use Autogenerar):</label>';
+            const grid = document.createElement('div');
+            grid.style.cssText = 'display:grid;grid-template-columns:repeat(auto-fill,minmax(180px,1fr));gap:10px;';
+            for (let i = 0; i < rivalNumJugadores; i++) {
+                const input = document.createElement('input');
+                input.type = 'text';
+                input.id = `rp-name-${i}`;
+                input.placeholder = `Participante ${i + 1}`;
+                input.value = (rivalJugadores[i] && rivalJugadores[i].nombre !== `Participante ${i + 1}`) ? rivalJugadores[i].nombre : '';
+                input.style.cssText = 'padding:8px 12px;';
+                grid.appendChild(input);
+            }
+            list.appendChild(grid);
+        }
+
+        function renderizarPreguntasRival() {
+            const container = document.getElementById('admin-rival-questions');
+            container.innerHTML = '';
+            rivalPreguntas.forEach((preg, idx) => {
+                const card = document.createElement('div');
+                card.className = 'question-card';
+                card.innerHTML = `
+            <span class="pts-badge">Pregunta ${idx + 1}</span>
+            <div class="question-field"><label>Enunciado</label><textarea data-rq="${idx}" data-field="pregunta" style="height:60px;">${escHtml(preg.pregunta)}</textarea></div>
+            <div class="options-grid">${['A', 'B', 'C', 'D'].map(l => `<div class="option-field"><label>${l})</label><textarea data-rq="${idx}" data-field="${l}" style="height:46px;">${escHtml(preg[l])}</textarea></div>`).join('')}</div>
+            <div style="margin-top:8px;">
+                <label style="color:var(--gray);font-size:0.82rem;">Respuesta correcta:</label>
+                <select class="correct-select" data-rq="${idx}">${['A', 'B', 'C', 'D'].map(l => `<option value="${l}" ${preg.correcta === l ? 'selected' : ''}>${l}</option>`).join('')}</select>
+            </div>`;
+                card.querySelectorAll('textarea').forEach(ta => ta.addEventListener('input', e => { rivalPreguntas[+e.target.dataset.rq][e.target.dataset.field] = e.target.value; }));
+                card.querySelector('select').addEventListener('change', e => { rivalPreguntas[+e.target.dataset.rq].correcta = e.target.value; });
+                container.appendChild(card);
+            });
+        }
+
+        function irAlAdminMapeo() {
+            document.getElementById('game-screen').style.display = 'none';
+            document.getElementById('rival-screen').style.display = 'none';
+            if (modoJuego === 'jeopardy') {
+                document.getElementById('admin-screen').style.display = 'block';
+            } else if (modoJuego === 'rival') {
+                document.getElementById('admin-rival-screen').style.display = 'block';
+            }
+        }
+
+        function irAlInicio() {
+            if (confirm("¿Estás seguro de que deseas volver al menú principal?")) {
+                document.getElementById('global-nav').style.display = 'none';
+                document.getElementById('game-screen').style.display = 'none';
+                document.getElementById('rival-screen').style.display = 'none';
+                document.getElementById('admin-screen').style.display = 'none';
+                document.getElementById('admin-rival-screen').style.display = 'none';
+                document.getElementById('setup-screen').style.display = 'none';
+                modoJuego = null;
+                document.getElementById('game-selector').style.display = 'block';
+                if (localStorage.getItem('cobiet_savegame')) document.getElementById('btn-resume-game').style.display = 'block';
+            }
+        }
+
+        function guardarPartida() {
+            const partidaEstado = {
+                modoJuego, numEquipos, currentScores, rivalJugadores, rivalNumJugadores,
+                rivalTurnoIdx, rivalRonda, rivalBote, rivalCadena, rivalQIdx,
+                preguntasRespondidasEnEsteCiclo,
+                boardState: Array.from(document.querySelectorAll('.cell-card')).map(c => c.classList.contains('disabled'))
+            };
+            localStorage.setItem('cobiet_savegame', JSON.stringify(partidaEstado));
+            alert('¡Partida guardada de forma local con éxito!');
+        }
+
+        function reanudarPartida() {
+            const rawSave = localStorage.getItem('cobiet_savegame');
+            const rawDatos = localStorage.getItem('cobiet_juegodatos');
+            if (!rawSave || !rawDatos) return;
+
+            juegoDatos = JSON.parse(rawDatos);
+            const save = JSON.parse(rawSave);
+            modoJuego = save.modoJuego;
+
+            document.getElementById('game-selector').style.display = 'none';
+            document.getElementById('global-nav').style.display = 'flex';
+
+            if (modoJuego === 'jeopardy') {
+                numEquipos = save.numEquipos;
+                currentScores = save.currentScores;
+                renderizarTablero();
+                renderizarMarcador();
+                for (let i = 1; i <= numEquipos; i++) {
+                    const el = document.getElementById(`score-team-${i}`);
+                    if (el) el.innerText = currentScores[i];
+                }
+                const cards = document.querySelectorAll('.cell-card');
+                save.boardState.forEach((isDisabled, idx) => {
+                    if (isDisabled && cards[idx]) cards[idx].classList.add('disabled');
+                });
+                document.getElementById('game-screen').style.display = 'flex';
+            } else if (modoJuego === 'rival') {
+                rivalPreguntas = juegoDatos.preguntas;
+                rivalJugadores = save.rivalJugadores;
+                rivalNumJugadores = save.rivalNumJugadores;
+                rivalTurnoIdx = save.rivalTurnoIdx;
+                rivalRonda = save.rivalRonda;
+            
+                rivalQIdx = save.rivalQIdx;
+                preguntasRespondidasEnEsteCiclo = save.preguntasRespondidasEnEsteCiclo || 0;
+                renderizarRival();
+                document.getElementById('rival-screen').style.display = 'flex';
+            }
+        }
+
+        // ════════════════════════════════════════
+        //  JEOPARDY — DINÁMICA ACTIVA
+        // ════════════════════════════════════════
+        function iniciarJuego() {
+            if (Object.keys(currentScores).length === 0) {
+                for (let i = 1; i <= numEquipos; i++) currentScores[i] = 0;
+            }
+            renderizarTablero();
+            renderizarMarcador();
+            document.getElementById('admin-screen').style.display = 'none';
+            document.getElementById('game-screen').style.display = 'flex';
+        }
+
+        function renderizarTablero() {
+            const grid = document.getElementById('board-grid');
+            grid.innerHTML = '';
+            const numCats = juegoDatos.categorias.length;
+            grid.style.gridTemplateColumns = `repeat(${numCats}, 1fr)`;
+            juegoDatos.categorias.forEach(cat => {
+                const h = document.createElement('div');
+                h.className = 'cat-header';
+                h.innerText = cat.nombre;
+                grid.appendChild(h);
+            });
+            [100, 200, 300, 400, 500].forEach((puntos, i) => {
+                juegoDatos.categorias.forEach(cat => {
+                    const preg = (cat.preguntas && cat.preguntas[i]) ? cat.preguntas[i] : { puntos, pista: 'Sin pregunta', respuesta: 'Sin respuesta' };
+                    const card = document.createElement('div');
+                    card.className = 'cell-card';
+                    card.innerText = `${puntos}`;
+                    card.onclick = () => { if (!card.classList.contains('disabled')) abrirPregunta(cat.nombre, preg, card); };
+                    grid.appendChild(card);
+                });
+            });
+        }
+
+        function renderizarMarcador() {
+            const row = document.getElementById('scoreboard-row');
+            row.innerHTML = '';
+            for (let i = 1; i <= numEquipos; i++) {
+                const div = document.createElement('div');
+                div.className = 'team-score';
+                div.innerHTML = `<h3 contenteditable="true">EQUIPO ${i}</h3>
+            <div class="score-val" id="score-team-${i}">${currentScores[i] || 0}</div>
+            <div class="score-ctrls">
+                <button class="btn-sm btn-plus" onclick="adjustScore(${i},100)">+100</button>
+                <button class="btn-sm btn-minus" onclick="adjustScore(${i},-100)">-100</button>
+            </div>`;
+                row.appendChild(div);
+            }
+        }
+
+        function abrirPregunta(catNombre, pregunta, elementoCard) {
+            activeCardValue = pregunta.puntos;
+            elementoCard.classList.add('disabled');
+            document.getElementById('modal-title-pts').innerText = `${catNombre.toUpperCase()} — ${pregunta.puntos}`;
+            document.getElementById('modal-clue-text').innerText = pregunta.pista;
+            const ansBox = document.getElementById('modal-answer-text');
+            ansBox.innerText = pregunta.respuesta;
+            ansBox.style.display = 'none';
+
+            const assignRow = document.getElementById('assign-btns-row');
+            assignRow.innerHTML = '<span style="align-self:center;font-weight:bold;">Asignar puntos:</span>';
+            for (let i = 1; i <= numEquipos; i++) {
+                const btn = document.createElement('button');
+                btn.className = 'team-assign-btn';
+                btn.textContent = `Eq ${i}`;
+                btn.onclick = () => assignCardPoints(i);
+                assignRow.appendChild(btn);
+            }
+            const nadieBtn = document.createElement('button');
+            nadieBtn.className = 'team-assign-btn';
+            nadieBtn.style.background = '#4a5568';
+            nadieBtn.textContent = 'Nadie';
+            nadieBtn.onclick = () => {
+                lanzarAnimacionGatito(false);
+
+                setTimeout(() => {
+                    closeModal();
+                }, 1200);
+            };
+            assignRow.appendChild(nadieBtn);
+
+            document.getElementById('clue-modal').style.display = 'flex';
+
+            const timerBar = document.getElementById('modal-timer');
+            const timerLbl = document.getElementById('timer-label');
+            timerBar.style.transition = 'none';
+            timerBar.style.width = '100%';
+            timerBar.style.backgroundColor = 'var(--gold)';
+            timerBar.offsetHeight;
+            timerBar.style.transition = `width ${TIMER_SECONDS}s linear`;
+            timerBar.style.width = '0%';
+
+            if (timerInterval) clearInterval(timerInterval);
+            if (timerCountdown) clearInterval(timerCountdown);
+            let segs = TIMER_SECONDS;
+            timerLbl.textContent = `⏱ ${segs} segundos`;
+            timerCountdown = setInterval(() => {
+                segs--;
+                timerLbl.textContent = `⏱ ${segs} segundos`;
+                if (segs <= 5) timerBar.style.backgroundColor = 'var(--danger)';
+                if (segs <= 0) { clearInterval(timerCountdown); timerLbl.textContent = '⏱ ¡Tiempo agotado!'; }
+            }, 1000);
+
+            document.getElementById('btn-reveal-ans').onclick = () => { ansBox.style.display = 'block'; clearInterval(timerCountdown); };
+        }
+
+        function closeModal() {
+            document.getElementById('clue-modal').style.display = 'none';
+            clearInterval(timerInterval);
+            clearInterval(timerCountdown);
+        }
+        function assignCardPoints(teamId) { 
+            lanzarAnimacionGatito(true);
+            adjustScore(teamId, activeCardValue); 
+            setTimeout(() => {
+             closeModal(); 
+            }, 1200); // Duración de la animación del gatito
+        }
+        function adjustScore(teamId, cantidad) {
+            currentScores[teamId] = (currentScores[teamId] || 0) + cantidad;
+            const el = document.getElementById(`score-team-${teamId}`);
+            if (el) { el.innerText = currentScores[teamId]; el.style.color = currentScores[teamId] < 0 ? 'var(--danger)' : 'var(--gold)'; }
+        }
+
+
+        // ════════════════════════════════════════
+        //  EL RIVAL MÁS DÉBIL — TOTALMENTE ADAPTADO
+        // ════════════════════════════════════════
+        function iniciarRival() {
+            if (rivalJugadores.length === 0) {
+                for (let i = 0; i < rivalNumJugadores; i++) {
+                    const input = document.getElementById(`rp-name-${i}`);
+                    let nombreAsignado = (input && input.value.trim()) || `Participante ${i + 1}`;
+                    rivalJugadores.push({
+                        nombre: nombreAsignado,
+                        correcto: 0,
+                        incorrecto: 0,
+                        fallasEnRonda: 0,
+                        eliminado: false
+                    });
+                }
+            }
+            preguntasRespondidasEnEsteCiclo = 0;
+            document.getElementById('admin-rival-screen').style.display = 'none';
+            document.getElementById('rival-screen').style.display = 'flex';
+            renderizarRival();
+        }
+
+        function jugadoresActivos() {
+            return rivalJugadores.filter(j => !j.eliminado);
+        }
+
+        function renderizarRival() {
+            const activos = jugadoresActivos();
+
+            // Evitar desborde de índice de turnos si se reduce el arreglo de activos
+            if (activos.length > 0 && rivalTurnoIdx >= activos.length) {
+                rivalTurnoIdx = 0;
+            }
+
+            document.getElementById('rival-ronda-num').textContent = rivalRonda;
+            document.getElementById('rival-q-num-disp').textContent = rivalQIdx + 1;
+            document.getElementById('rival-q-total').textContent = rivalPreguntas.length;
+            
+
+            // Renderizar badges de participantes en pantalla
+            const playersRow = document.getElementById('rival-players-row');
+            playersRow.innerHTML = '';
+            rivalJugadores.forEach((j) => {
+                const div = document.createElement('div');
+                const esTurno = !j.eliminado && activos[rivalTurnoIdx] === j;
+                div.className = 'rival-player' + (j.eliminado ? ' eliminado' : (esTurno ? ' activo' : ''));
+                div.innerHTML = `${esTurno ? '<span class="turno-badge">TURNO</span>' : ''}
+            <div class="player-name">${escHtml(j.nombre)}</div>
+            <div class="player-correct">✓ ${j.correcto}</div>
+            <div class="player-wrong">✗ ${j.incorrecto}</div>`;
+                playersRow.appendChild(div);
+            });
+
+            // Poner la pregunta activa en pantalla
+            if (rivalQIdx < rivalPreguntas.length) {
+                const q = rivalPreguntas[rivalQIdx];
+                document.getElementById('rival-q-label').textContent = `PREGUNTA ${rivalQIdx + 1}`;
+                document.getElementById('rival-q-text').textContent = q.pregunta;
+                const optEl = document.getElementById('rival-q-options');
+                optEl.innerHTML = '';
+                ['A', 'B', 'C', 'D'].forEach(letra => {
+                    const btn = document.createElement('button');
+                    btn.className = 'rival-opt-btn';
+                    btn.disabled = rivalRespuestaRevelada;
+                    btn.innerHTML = `<span class="rival-opt-letter">${letra}</span>${escHtml(q[letra])}`;
+                    if (rivalRespuestaRevelada && letra === q.correcta) btn.classList.add('correct');
+                    btn.onclick = () => mostrarRespuestaRival(letra);
+                    optEl.appendChild(btn);
+                });
+            } else {
+                // En caso de que se agoten las preguntas de la base de datos
+                document.getElementById('rival-q-text').textContent = "¡Se han completado todas las preguntas disponibles!";
+                document.getElementById('rival-q-options').innerHTML = '';
+            }
+
+            document.getElementById('btn-sig-turno').style.display = rivalRespuestaRevelada ? 'inline-block' : 'none';
+        }
+
+        function mostrarRespuestaRival(letraElegida) {
+            rivalRespuestaRevelada = true;
+            const q = rivalPreguntas[rivalQIdx];
+            const optEl = document.getElementById('rival-q-options');
+            Array.from(optEl.children).forEach((btn, i) => {
+                const letra = ['A', 'B', 'C', 'D'][i];
+                btn.disabled = true;
+                if (letra === q.correcta) btn.classList.add('correct');
+                else if (letra === letraElegida && letraElegida !== q.correcta) btn.classList.add('wrong');
+            });
+            document.getElementById('btn-sig-turno').style.display = 'inline-block';
+        }
+
+        
+        function rivalRespuesta(correcto) {
+            const activos = jugadoresActivos();
+            if (activos.length === 0) return;
+
+            const jugadorActual = activos[rivalTurnoIdx];
+
+            // ANIMACIÓN
+            lanzarAnimacionGatito(correcto);
+
+
+            if (correcto) {
+                jugadorActual.correcto++;
+                
+            } else {
+                jugadorActual.incorrecto++;
+                jugadorActual.fallasEnRonda++;
+                
+            }
+
+            rivalRespuestaRevelada = false;
+               // Esperar a que termine la animación
+            setTimeout(() => {
+             rivalQIdx++;
+             preguntasRespondidasEnEsteCiclo++;
+
+            // Evaluar descarte automático inmediato según aforo inicial configurado
+             let limiteFallas = rivalNumJugadores > 15 ? 1 : 2;
+             if (jugadorActual.fallasEnRonda >= limiteFallas) {
+                ejecutarDescarteAutomatico(jugadorActual, limiteFallas);
+                return;
+             }
+
+            pasarAlSiguienteTurnoNormal();
+        }, 1700); // Duración de la animación del gatito
+        }
+
+        function rivalSiguienteTurno() {
+            // Si el moderador decide saltar o forzar con el botón físico "Siguiente Turno"
+            rivalRespuestaRevelada = false;
+            pasarAlSiguienteTurnoNormal();
+        }
+
+        function pasarAlSiguienteTurnoNormal() {
+            const activos = jugadoresActivos();
+
+            // Definir cuántas preguntas base deben responderse en total por ciclo
+            let preguntasPorCicloCompleto = rivalNumJugadores > 15 ? activos.length : activos.length * 2;
+
+            if (preguntasRespondidasEnEsteCiclo >= preguntasPorCicloCompleto || activos.length <= 1) {
+                finalizarCicloDeRonda();
+            } else {
+                rivalTurnoIdx = (rivalTurnoIdx + 1) % activos.length;
+                renderizarRival();
+            }
+        }
+
+        function ejecutarDescarteAutomatico(jugador, maxFallas) {
+            // Asegurar dinero en la cadena antes de romper el flujo
+            jugador.eliminado = true;
+
+            const overlay = document.getElementById('elim-overlay');
+            document.getElementById('elim-name-display').textContent = jugador.nombre;
+
+            const reasonText = maxFallas === 1
+                ? "Eliminación Directa: Falló su única oportunidad de oro en el circuito masivo."
+                : "Acumulación de Errores: Registró 2 respuestas incorrectas en el circuito.";
+            document.getElementById('elim-reason-display').textContent = reasonText;
+
+            overlay.classList.add('show');
+        }
+
+        function cerrarEliminado() {
+            document.getElementById('elim-overlay').classList.remove('show');
+
+            const activos = jugadoresActivos();
+
+            // Validar si al remover al jugador queda solo un sobreviviente invicto
+            if (activos.length === 1) {
+                document.getElementById('winner-name-display').textContent = activos[0].nombre;
+                document.getElementById('winner-prize-display').textContent = `Premio Final Acumulado: $${rivalBote.toLocaleString()}`;
+                document.getElementById('winner-overlay').classList.add('show');
+                return;
+            }
+
+            // Ajustar el índice de turnos para que no rompa la secuencia tras la eliminación
+            if (rivalTurnoIdx >= activos.length) {
+                rivalTurnoIdx = 0;
+            }
+
+            let preguntasPorCicloCompleto = rivalNumJugadores > 15 ? (activos.length + 1) : (activos.length + 1) * 2;
+            if (preguntasRespondidasEnEsteCiclo >= preguntasPorCicloCompleto) {
+                finalizarCicloDeRonda();
+            } else {
+                renderizarRival();
+            }
+        }
+
+        function finalizarCicloDeRonda() {
+            rivalBancar();
+            const activos = jugadoresActivos();
+
+            // Limpiar marcadores de fallas locales de la ronda que acaba de expirar
+            rivalJugadores.forEach(j => { j.fallasEnRonda = 0; });
+
+            if (activos.length <= 1) {
+                const ganadorFinal = activos[0] || { nombre: "Sin sobrevivientes" };
+                document.getElementById('winner-name-display').textContent = ganadorFinal.nombre;
+                document.getElementById('winner-prize-display').textContent = `Premio Final Acumulado: $${rivalBote.toLocaleString()}`;
+                document.getElementById('winner-overlay').classList.add('show');
+                return;
+            }
+
+            alert(`¡Ciclo de preguntas completado! Pasando automáticamente a la Ronda ${rivalRonda + 1} con los participantes invictos.`);
+            rivalRonda++;
+            rivalCadena = 0;
+            preguntasRespondidasEnEsteCiclo = 0;
+            rivalTurnoIdx = 0;
+            renderizarRival();
+        }
+
+
+        // ════════════════════════════════════════
+        //  MOTOR DE ANIMACIONES GATITOS
+        // ════════════════════════════════════════
+        
+        function inyectarEstilosGatitos() {
+            if (document.getElementById('kitty-styles')) return;
+            const style = document.createElement('style');
+            style.id = 'kitty-styles';
+            style.textContent = `
+                #kitty-overlay {
+                    position: fixed; top: 0; left: 0; width: 100vw; height: 100vh;
+                    background: rgba(10, 15, 30, 0.85); display: none;
+                    justify-content: center; align-items: center; z-index: 99999;
+                    flex-direction: column; overflow: hidden;
+                }
+                .kitty-box { text-align: center; animation: kittyPop 0.5s cubic-bezier(0.175, 0.885, 0.32, 1.275); }
+                .kitty-emoji { font-size: 120px; display: inline-block; }
+                .kitty-msg { font-size: 2.2rem; font-weight: bold; margin-top: 20px; text-transform: uppercase; letter-spacing: 2px; text-shadow: 2px 2px 8px rgba(0,0,0,0.6); }
+                @keyframes kittyPop { 0% { transform: scale(0); } 100% { transform: scale(1); } }
+                
+                .confetti-piece {
+                    position: absolute; width: 12px; height: 12px;
+                    animation: confettiDrop 2s infinite linear; opacity: 0.8;
+                }
+                @keyframes confettiDrop {
+                    0% { transform: translateY(-50px) rotate(0deg); opacity: 1; }
+                    100% { transform: translateY(105vh) rotate(360deg); opacity: 0; }
+                }
+                .balloon-piece {
+                    position: absolute; font-size: 45px; animation: balloonUp 3s forwards linear; bottom: -60px;
+                }
+                @keyframes balloonUp {
+                    0% { transform: translateY(0) translateX(0); opacity: 1; }
+                    100% { transform: translateY(-110vh) translateX(60px); opacity: 0; }
+                }
+                .rain-drop {
+                    position: absolute; width: 2px; height: 25px; background: #63b3ed;
+                    opacity: 0.4; animation: rainFall 0.8s infinite linear; top: -30px;
+                }
+                @keyframes rainFall { 0% { transform: translateY(0); } 100% { transform: translateY(105vh); } }
+            `;
+            document.head.appendChild(style);
+
+            const overlay = document.createElement('div');
+            overlay.id = 'kitty-overlay';
+            overlay.innerHTML = `<div class="kitty-box"><div class="kitty-emoji" id="kitty-art"></div><div class="kitty-msg" id="kitty-text"></div></div>`;
+            document.body.appendChild(overlay);
+        }
+        function lanzarAnimacionGatito(feliz) {
+            const overlay = document.getElementById('kitty-overlay');
+            const art = document.getElementById('kitty-art');
+            const txt = document.getElementById('kitty-text');
+
+            // Limpieza de nodos flotantes previos
+            Array.from(overlay.children).forEach(c => { if (c.className !== 'kitty-box') c.remove(); });
+
+            if (feliz) {
+                art.textContent = '😸🎉';
+                txt.textContent = '¡Excelente!';
+                txt.style.color = 'var(--success)';
+
+                // Generador dinámico de confeti de colores
+                for (let i = 0; i < 40; i++) {
+                    const p = document.createElement('div');
+                    p.className = 'confetti-piece';
+                    p.style.left = Math.random() * 100 + 'vw';
+                    p.style.top = Math.random() * -20 + 'px';
+                    p.style.background = `hsl(${Math.random() * 360}deg, 100%, 60%)`;
+                    p.style.animationDelay = Math.random() * 1.5 + 's';
+                    overlay.appendChild(p);
+                }
+                // Generador dinámico de globos
+                const balloons = ['🎈', '🔮', '💙', '💛', '💚', '❤️'];
+                for (let i = 0; i < 15; i++) {
+                    const b = document.createElement('div');
+                    b.className = 'balloon-piece';
+                    b.textContent = balloons[Math.floor(Math.random() * balloons.length)];
+                    b.style.left = Math.random() * 90 + 'vw';
+                    b.style.animationDelay = Math.random() * 1.2 + 's';
+                    overlay.appendChild(b);
+                }
+            } else {
+                art.textContent = '😾💧';
+                txt.textContent = '¡Incorrecto!';
+                txt.style.color = 'var(--danger)';
+
+                // Generador dinámico de lluvia
+                for (let i = 0; i < 35; i++) {
+                    const r = document.createElement('div');
+                    r.className = 'rain-drop';
+                    r.style.left = Math.random() * 100 + 'vw';
+                    r.style.animationDelay = Math.random() * 0.8 + 's';
+                    overlay.appendChild(r);
+                }
+            }
+
+            overlay.style.display = 'flex';
+            setTimeout(() => { overlay.style.display = 'none'; }, 1600);
+        }
+
+
+
+        function escHtml(str) {
+            return String(str).replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;');
+        }
+    </script>
+</body>
+
+</html>

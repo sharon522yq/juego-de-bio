@@ -1,0 +1,1186 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>IA Game Generator</title>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.4.120/pdf.min.js"></script>
+    <style>
+        :root {
+            --blue-dark: #4e1044;
+            --blue-classic: #aa189ee7;
+            --blue-bright: #622380;
+            --gold: #f1b504;
+            --white: #ffffff;
+            --gray: #cccccc;
+            --danger: #d9534f;
+            --success: #5cb85c;
+            --rival-red: #8b0000;
+            --rival-accent: #c0392b;
+        }
+        * { box-sizing: border-box; margin: 0; padding: 0; font-family: 'Arial', sans-serif; }
+        body { background-color: var(--blue-dark); color: var(--white); min-height: 100vh; display: flex; flex-direction: column; align-items: center; justify-content: flex-start; padding: 20px; }
+        header { text-align: center; margin-bottom: 20px; }
+        header h1 { color: var(--gold); font-size: 2.5rem; text-shadow: 2px 2px var(--blue-classic); margin-bottom: 5px; }
+        header p { color: var(--gray); font-style: italic; }
+        .container { width: 100%; max-width: 1200px; background: rgba(255,255,255,0.05); border-radius: 12px; padding: 25px; border: 1px solid rgba(241,181,4,0.2); position: relative; }
+
+        /* ── BARRA DE CONTROL GLOBAL RECOPTILADA ── */
+        #global-nav { display: none; justify-content: flex-end; gap: 10px; margin-bottom: 15px; width: 100%; max-width: 1200px; }
+        .nav-btn { padding: 8px 14px; font-size: 0.85rem; font-weight: bold; border-radius: 6px; cursor: pointer; border: none; color: white; transition: background 0.2s; }
+        .nav-btn.btn-save { background-color: var(--success); }
+        .nav-btn.btn-admin { background-color: #4a5568; }
+        .nav-btn.btn-home { background-color: var(--danger); }
+        .nav-btn:hover { opacity: 0.9; }
+
+        /* ── GAME SELECTOR ── */
+        #game-selector { display: block; }
+        .selector-title { color: var(--gold); font-size: 1.5rem; font-weight: bold; text-align: center; margin-bottom: 8px; }
+        .selector-sub { color: var(--gray); text-align: center; margin-bottom: 30px; font-style: italic; }
+        .game-cards { display: flex; gap: 20px; justify-content: center; flex-wrap: wrap; }
+        .game-card { flex: 1; min-width: 260px; max-width: 380px; border-radius: 14px; padding: 30px 24px; cursor: pointer; text-align: center; transition: all 0.2s ease; border: 3px solid transparent; }
+        .game-card:hover { transform: translateY(-4px); border-color: var(--gold); }
+        .game-card.jeopardy { background: linear-gradient(145deg, #000080, #061437); }
+        .game-card.rival { background: linear-gradient(145deg, #5a0000, #1a0000); }
+        .game-card .game-icon { font-size: 3.5rem; margin-bottom: 14px; }
+        .game-card h2 { font-size: 1.5rem; font-weight: bold; margin-bottom: 10px; }
+        .game-card.jeopardy h2 { color: var(--gold); }
+        .game-card.rival h2 { color: #ff6b6b; }
+        .game-card p { color: var(--gray); font-size: 0.92rem; line-height: 1.5; }
+        .game-card .select-btn { display: inline-block; margin-top: 20px; padding: 10px 24px; border-radius: 8px; font-weight: bold; font-size: 1rem; }
+        .game-card.jeopardy .select-btn { background: var(--gold); color: var(--blue-dark); }
+        .game-card.rival .select-btn { background: #c0392b; color: white; }
+
+        /* ── SETUP ── */
+        #setup-screen { display: none; }
+        .setup-back { background: none; border: none; color: var(--gray); cursor: pointer; font-size: 0.9rem; margin-bottom: 16px; padding: 4px 0; }
+        .setup-back:hover { color: white; }
+        .form-group { margin-bottom: 20px; }
+        label { display: block; margin-bottom: 8px; color: var(--gold); font-weight: bold; }
+        input[type="text"], input[type="password"], textarea, input[type="file"] { width: 100%; padding: 12px; border-radius: 6px; border: 2px solid var(--blue-classic); background-color: #0b1d4f; color: white; font-size: 1rem; }
+        input[type="text"]:focus, input[type="password"]:focus, textarea:focus { border-color: var(--gold); outline: none; }
+        textarea { height: 150px; resize: vertical; }
+        .btn { background-color: var(--gold); color: var(--blue-dark); border: none; padding: 12px 24px; font-size: 1.1rem; font-weight: bold; border-radius: 6px; cursor: pointer; transition: all 0.2s ease; width: 100%; }
+        .btn:hover { background-color: #ffca28; transform: translateY(-2px); }
+        .btn.rival-btn { background-color: var(--rival-accent); color: white; }
+        .btn.rival-btn:hover { background-color: #e74c3c; }
+
+        /* ── LOADING ── */
+        #loading-screen { display: none; text-align: center; padding: 40px 0; }
+        .spinner { border: 6px solid rgba(255,255,255,0.1); width: 60px; height: 60px; border-left-color: var(--gold); border-radius: 50%; animation: spin 1s linear infinite; margin: 0 auto 20px auto; }
+        @keyframes spin { 0%{transform:rotate(0deg)} 100%{transform:rotate(360deg)} }
+
+        /* ── ADMIN ── */
+        #admin-screen { display: none; }
+        .admin-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px; flex-wrap: wrap; gap: 10px; }
+        .admin-header h2 { color: var(--gold); font-size: 1.6rem; }
+        .admin-header .btn { width: auto; padding: 10px 22px; }
+        .admin-teams-row { display: flex; align-items: center; gap: 15px; margin-bottom: 25px; padding: 15px; background: rgba(17,95,251,0.12); border-radius: 8px; border: 1px solid var(--blue-bright); flex-wrap: wrap; }
+        .admin-teams-row label { color: var(--gold); margin: 0; white-space: nowrap; }
+        .team-count-controls { display: flex; align-items: center; gap: 10px; }
+        .team-count-controls button { background: var(--blue-bright); color: white; border: none; width: 32px; height: 32px; border-radius: 6px; font-size: 1.2rem; cursor: pointer; font-weight: bold; }
+        .team-count-controls button:hover { background: var(--gold); color: var(--blue-dark); }
+        #team-count-display { font-size: 1.4rem; font-weight: bold; color: var(--gold); min-width: 30px; text-align: center; }
+        .category-block { margin-bottom: 28px; background: rgba(0,0,128,0.25); border-radius: 10px; padding: 18px; border: 1px solid rgba(241,181,4,0.25); }
+        .category-block h3 { color: var(--gold); margin-bottom: 14px; font-size: 1.1rem; display: flex; align-items: center; gap: 10px; flex-wrap: wrap; }
+        .cat-name-input { background: #0b1d4f; border: 1px solid var(--blue-bright); color: white; border-radius: 5px; padding: 5px 10px; font-size: 1rem; font-weight: bold; flex: 1; min-width: 150px; }
+        .cat-name-input:focus { border-color: var(--gold); outline: none; }
+        .question-card { background: #0b1d4f; border: 1px solid #2d3748; border-radius: 8px; padding: 14px; margin-bottom: 10px; }
+        .question-card .pts-badge { display: inline-block; background: var(--gold); color: var(--blue-dark); font-weight: bold; font-size: 0.85rem; border-radius: 4px; padding: 2px 8px; margin-bottom: 10px; }
+        .question-field { margin-bottom: 8px; }
+        .question-field label { color: var(--gray); font-size: 0.82rem; font-weight: normal; margin-bottom: 4px; }
+        .question-field textarea { height: 58px; font-size: 0.92rem; padding: 8px; }
+        .options-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; margin-top: 4px; }
+        .option-field label { color: #a0aec0; font-size: 0.78rem; margin-bottom: 2px; }
+        .option-field textarea { height: 46px; font-size: 0.88rem; padding: 6px; }
+        .correct-select { background: #0b1d4f; border: 1px solid var(--blue-classic); color: white; border-radius: 5px; padding: 5px 10px; font-size: 0.88rem; margin-top: 6px; }
+        .correct-select:focus { border-color: var(--gold); outline: none; }
+
+        /* ── JEOPARDY GAME ── */
+        #game-screen { display: none; flex-direction: column; gap: 20px; }
+        .board { display: grid; gap: 15px; background-color: #000; padding: 15px; border-radius: 8px; border: 3px solid var(--gold); }
+        .cat-header { background-color: var(--blue-classic); color: var(--white); font-weight: bold; text-transform: uppercase; text-align: center; padding: 15px 5px; border: 2px solid var(--blue-bright); font-size: 1.1rem; display: flex; align-items: center; justify-content: center; min-height: 70px; box-shadow: inset 0 0 10px rgba(0,0,0,0.5); }
+        .cell-card { background-color: var(--blue-classic); color: var(--gold); font-size: 1.8rem; font-weight: bold; text-align: center; padding: 25px 10px; border: 2px solid var(--blue-bright); cursor: pointer; user-select: none; transition: all 0.2s ease; box-shadow: inset 0 0 15px rgba(0,0,0,0.5); display: flex; align-items: center; justify-content: center; }
+        .cell-card:hover { background-color: var(--blue-bright); color: var(--white); transform: scale(1.02); }
+        .cell-card.disabled { background-color: #1a2536; color: #4a5568; border-color: #2d3748; cursor: not-allowed; transform: none; box-shadow: none; }
+        .scoreboard { display: flex; justify-content: space-around; flex-wrap: wrap; gap: 15px; margin-top: 10px; padding-top: 15px; border-top: 2px solid rgba(241,181,4,0.3); }
+        .team-score { background: #0b1d4f; border: 2px solid var(--blue-bright); border-radius: 8px; padding: 15px; text-align: center; min-width: 180px; }
+        .team-score h3 { color: var(--white); margin-bottom: 5px; font-size: 1.2rem; }
+        .score-val { font-size: 2rem; font-weight: bold; color: var(--gold); margin-bottom: 10px; }
+        .score-ctrls { display: flex; gap: 10px; justify-content: center; }
+        .btn-sm { padding: 6px 12px; font-weight: bold; border: none; border-radius: 4px; cursor: pointer; }
+        .btn-plus { background-color: var(--success); color: white; }
+        .btn-minus { background-color: var(--danger); color: white; }
+
+        /* ── JEOPARDY MODAL ── */
+        .modal { display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background-color: rgba(0,0,0,0.92); z-index: 1000; align-items: center; justify-content: center; padding: 20px; }
+        .modal-content { background-color: var(--blue-classic); border: 4px solid var(--gold); border-radius: 12px; width: 100%; max-width: 800px; padding: 30px; text-align: center; position: relative; box-shadow: 0 0 30px rgba(241,181,4,0.4); }
+        .modal-points { color: var(--gold); font-size: 1.5rem; font-weight: bold; margin-bottom: 15px; }
+        .modal-clue { font-size: 2rem; line-height: 1.4; margin-bottom: 30px; font-weight: bold; }
+        .modal-answer { font-size: 1.6rem; color: #a3e635; margin-bottom: 30px; padding: 15px; background: rgba(0,0,0,0.3); border-radius: 6px; display: none; font-style: italic; }
+        .timer-container { width: 100%; background-color: #2d3748; height: 14px; border-radius: 7px; margin-bottom: 12px; overflow: hidden; }
+        .timer-bar { width: 100%; height: 100%; background-color: var(--gold); transition: width 1s linear; }
+        .timer-label { font-size: 0.9rem; color: var(--gray); margin-bottom: 20px; }
+        .modal-actions { display: flex; flex-direction: column; gap: 15px; }
+        .modal-row { display: flex; gap: 10px; justify-content: center; flex-wrap: wrap; }
+        .btn-modal { padding: 10px 20px; font-weight: bold; border: none; border-radius: 4px; cursor: pointer; }
+        .btn-reveal { background-color: var(--gold); color: var(--blue-dark); width: 100%; font-size: 1.1rem; }
+        .btn-close-modal { background-color: #4a5568; color: white; width: 100%; }
+        .team-assign-btn { background-color: var(--blue-dark); color: white; border: 1px solid var(--blue-bright); padding: 8px 15px; border-radius: 4px; cursor: pointer; }
+        .team-assign-btn:hover { background-color: var(--blue-bright); }
+
+        /* ── RIVAL MÁS DÉBIL ── */
+        #rival-screen { display: none; flex-direction: column; gap: 0; }
+        .rival-header { background: linear-gradient(180deg, #1a0000 0%, #3d0000 100%); border: 2px solid #8b0000; border-radius: 10px 10px 0 0; padding: 18px 24px; display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 10px; }
+        .rival-header h2 { color: #ff6b6b; font-size: 1.5rem; letter-spacing: 2px; }
+        .rival-bote { text-align: center; }
+        .rival-bote .bote-label { color: var(--gray); font-size: 0.85rem; }
+        .rival-bote .bote-val { color: var(--gold); font-size: 2rem; font-weight: bold; }
+        .rival-ronda-info { color: var(--gray); font-size: 0.9rem; text-align: right; }
+        .rival-ronda-info strong { color: white; }
+        .rival-body { background: #0d0000; border-left: 2px solid #8b0000; border-right: 2px solid #8b0000; padding: 24px; }
+
+        /* Jugadores */
+        .rival-players { display: flex; justify-content: center; flex-wrap: wrap; gap: 12px; margin-bottom: 24px; }
+        .rival-player { background: #1a0a0a; border: 2px solid #4a0000; border-radius: 10px; padding: 12px 16px; text-align: center; min-width: 110px; transition: all 0.3s; position: relative; }
+        .rival-player.activo { border-color: var(--gold); background: #2a1000; box-shadow: 0 0 12px rgba(241,181,4,0.3); }
+        .rival-player.eliminado { opacity: 0.3; border-color: #333; filter: grayscale(1); }
+        .rival-player .player-name { font-weight: bold; font-size: 0.95rem; margin-bottom: 4px; }
+        .rival-player .player-correct { font-size: 0.8rem; color: var(--success); }
+        .rival-player .player-wrong { font-size: 0.8rem; color: var(--danger); }
+        .rival-player .turno-badge { position: absolute; top: -10px; left: 50%; transform: translateX(-50%); background: var(--gold); color: var(--blue-dark); font-size: 0.7rem; font-weight: bold; border-radius: 4px; padding: 1px 6px; white-space: nowrap; }
+
+        /* Pregunta rival */
+        .rival-question-box { background: #1a0505; border: 2px solid #6b0000; border-radius: 10px; padding: 24px; text-align: center; margin-bottom: 20px; }
+        .rival-q-num { color: #ff6b6b; font-size: 0.85rem; font-weight: bold; margin-bottom: 10px; letter-spacing: 1px; }
+        .rival-q-text { font-size: 1.5rem; font-weight: bold; line-height: 1.4; margin-bottom: 20px; }
+        .rival-options { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
+        .rival-opt-btn { padding: 14px 10px; border-radius: 8px; border: 2px solid #6b0000; background: #2a0505; color: white; font-size: 1rem; font-weight: bold; cursor: pointer; transition: all 0.2s; text-align: left; }
+        .rival-opt-btn:hover:not(:disabled) { border-color: var(--gold); background: #3a1010; }
+        .rival-opt-btn.correct { border-color: var(--success); background: #0a2a0a; color: #a3e635; }
+        .rival-opt-btn.wrong { border-color: var(--danger); background: #2a0a0a; color: #ff6b6b; }
+        .rival-opt-btn:disabled { cursor: default; }
+        .rival-opt-letter { display: inline-block; background: #6b0000; color: white; border-radius: 4px; padding: 1px 7px; margin-right: 8px; font-size: 0.85rem; }
+
+        /* Controles admin rival */
+        .rival-admin-controls { display: flex; gap: 10px; flex-wrap: wrap; justify-content: center; margin-bottom: 20px; }
+        .rival-ctrl-btn { padding: 10px 18px; border-radius: 7px; border: none; font-weight: bold; cursor: pointer; font-size: 0.95rem; transition: all 0.2s; }
+        .btn-banco { background: var(--gold); color: var(--blue-dark); }
+        .btn-banco:hover { background: #ffca28; }
+        .btn-correcto { background: var(--success); color: white; }
+        .btn-correcto:hover { background: #4cae4c; }
+        .btn-incorrecto { background: var(--danger); color: white; }
+        .btn-incorrecto:hover { background: #c9302c; }
+        .btn-sig-turno { background: var(--blue-bright); color: white; }
+        .btn-sig-turno:hover { background: #0d4fd6; }
+
+        /* Fase votación */
+        .rival-vote-box { background: #0d0d0d; border: 2px solid #8b0000; border-radius: 10px; padding: 20px; margin-top: 16px; }
+        .rival-vote-box h3 { color: #ff6b6b; text-align: center; margin-bottom: 16px; font-size: 1.2rem; letter-spacing: 1px; }
+        .vote-grid { display: flex; flex-wrap: wrap; gap: 10px; justify-content: center; }
+        .vote-btn { padding: 10px 18px; background: #3d0000; border: 2px solid #8b0000; color: white; border-radius: 8px; cursor: pointer; font-weight: bold; transition: all 0.2s; }
+        .vote-btn:hover { background: #6b0000; border-color: #ff6b6b; }
+
+        /* overlays */
+        .rival-elim-overlay { display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.95); z-index: 2000; align-items: center; justify-content: center; flex-direction: column; text-align: center; padding: 30px; }
+        .rival-elim-overlay.show { display: flex; }
+        .elim-title { color: #ff6b6b; font-size: 2.5rem; font-weight: bold; letter-spacing: 3px; margin-bottom: 20px; text-shadow: 0 0 20px #ff0000; }
+        .elim-name { color: white; font-size: 3rem; font-weight: bold; margin-bottom: 10px; }
+        .elim-frase { color: var(--gray); font-size: 1.3rem; font-style: italic; margin-bottom: 30px; }
+        .elim-continue { background: var(--danger); color: white; border: none; padding: 14px 32px; border-radius: 8px; font-size: 1.1rem; font-weight: bold; cursor: pointer; }
+        .elim-continue:hover { background: #c0392b; }
+
+        .winner-overlay { display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.97); z-index: 2000; align-items: center; justify-content: center; flex-direction: column; text-align: center; padding: 30px; }
+        .winner-overlay.show { display: flex; }
+        .winner-title { color: var(--gold); font-size: 2rem; font-weight: bold; margin-bottom: 16px; }
+        .winner-name { color: white; font-size: 3.5rem; font-weight: bold; margin-bottom: 10px; }
+        .winner-prize { color: var(--gold); font-size: 2rem; margin-bottom: 30px; }
+        .winner-restart { background: var(--gold); color: var(--blue-dark); border: none; padding: 14px 32px; border-radius: 8px; font-size: 1.1rem; font-weight: bold; cursor: pointer; }
+
+        /* Cadena en rival */
+        .cadena-row { display: flex; align-items: center; justify-content: center; gap: 4px; margin-bottom: 16px; flex-wrap: wrap; }
+        .cadena-slot { width: 28px; height: 28px; border-radius: 50%; border: 2px solid #6b0000; background: #1a0000; display: flex; align-items: center; justify-content: center; font-size: 0.7rem; font-weight: bold; }
+        .cadena-slot.lleno { background: var(--gold); border-color: var(--gold); color: var(--blue-dark); }
+        .cadena-slot.banked { background: var(--success); border-color: var(--success); color: white; }
+        .cadena-sep { color: #6b0000; font-weight: bold; }
+
+        /* ── MODO INFO BADGE ── */
+        #rival-mode-info { font-size:0.78rem; margin-top:4px; color:#ffca28; font-style:italic; }
+        .rival-player .player-name { font-size:0.85rem; }
+        @media (max-width:600px) { .rival-players { gap:6px; } .rival-player { min-width:80px; padding:8px 10px; } }
+        /* ── LLUVIA ELIMINADO ── */
+        .rival-elim-overlay { overflow:hidden; }
+        /* ── AUTOGENERAR BTN ── */
+        .btn-autogen { background:#6b2fa0; color:white; border:none; padding:9px 20px; border-radius:6px; font-weight:bold; cursor:pointer; margin-bottom:8px; margin-right:8px; transition:background 0.2s; }
+        .btn-autogen:hover { background:#8a3fc4; }
+    </style>
+</head>
+<body>
+
+<header>
+    <h1>Juegos interactivos COBIET</h1>
+    <br>
+    <img src="1.cobiet.jpg.jpeg" width="150" height="150">
+</header>
+
+<div id="global-nav">
+    <button class="nav-btn btn-save" onclick="guardarPartida()">💾 Guardar Partida</button>
+    <button class="nav-btn btn-admin" onclick="irAlAdminMapeo()">⚙️ Panel Admin</button>
+    <button class="nav-btn btn-home" onclick="irAlInicio()">🏠 Inicio</button>
+</div>
+
+<div class="container">
+
+    <div id="game-selector">
+        <p class="selector-title">¿Qué juego deseas jugar?</p>
+        <div class="game-cards">
+            <div class="game-card jeopardy" onclick="seleccionarJuego('jeopardy')">
+                <div class="game-icon">🎯</div>
+                <h2>JEOPARDY</h2>
+                <p>Tablero de categorías y puntajes. Los equipos eligen preguntas y acumulan puntos respondiendo correctamente.</p>
+                <span class="select-btn">¡Jugar Jeopardy!</span>
+            </div>
+            <div class="game-card rival" onclick="seleccionarJuego('rival')">
+                <div class="game-icon">🔴</div>
+                <h2>EL RIVAL MÁS DÉBIL</h2>
+                <p>Rondas de preguntas con 4 opciones A B C D. Descarte automático por errores. Soporta hasta 40 participantes con modos Grupo Reducido y Grupo Masivo.</p>
+                <span class="select-btn">¡Jugar El Rival!</span>
+            </div>
+        </div>
+        <button id="btn-resume-game" class="btn" style="display:none; max-width:340px; margin:25px auto 0 auto; background-color:var(--success); color:white;">📂 Reanudar Partida Anterior</button>
+    </div>
+
+    <div id="setup-screen">
+        <button class="setup-back" onclick="volverSelector()">← Cambiar juego</button>
+        <div id="setup-game-label" style="color:var(--gold);font-size:1.2rem;font-weight:bold;margin-bottom:18px;"></div>
+        <div class="form-group">
+            <label for="api-key">Gemini API Key</label>
+            <input type="password" id="api-key" placeholder="Pega tu API Key de Google AI Studio">
+            <small style="color:var(--gray);display:block;margin-top:5px;">Tu clave no se guarda en ningún servidor.</small>
+        </div>
+        <div class="form-group">
+            <label for="file-input">Cargar Archivo (PDF o TXT)</label>
+            <input type="file" id="file-input" accept=".pdf,.txt">
+        </div>
+        <div class="form-group">
+            <label for="text-input">O pega el texto informativo directamente aquí</label>
+            <textarea id="text-input" placeholder="Pega aquí el contenido temático..."></textarea>
+        </div>
+        <button class="btn" id="generate-btn">¡PROCESAR E INICIAR!</button>
+    </div>
+
+    <div id="loading-screen">
+        <div class="spinner"></div>
+        <h2>La IA está generando las preguntas...</h2>
+        <p style="margin-top:10px;color:var(--gray);">Esto puede tardar unos segundos.</p>
+    </div>
+
+    <div id="admin-screen">
+        <div class="admin-header">
+            <h2>⚙️ Panel del Administrador — Jeopardy</h2>
+            <button class="btn" onclick="iniciarJuego()">▶ INICIAR JUEGO</button>
+        </div>
+        <div class="admin-teams-row">
+            <label>Número de equipos:</label>
+            <div class="team-count-controls">
+                <button onclick="cambiarEquipos(-1)">−</button>
+                <span id="team-count-display">3</span>
+                <button onclick="cambiarEquipos(1)">+</button>
+            </div>
+            <small style="color:var(--gray);margin-left:10px;">Mín: 1 | Máx: 8</small>
+        </div>
+        <div id="admin-categories"></div>
+    </div>
+
+    <div id="game-screen">
+        <div class="board" id="board-grid"></div>
+        <div class="scoreboard" id="scoreboard-row"></div>
+    </div>
+
+    <div id="admin-rival-screen" style="display:none;">
+        <div class="admin-header">
+            <h2>⚙️ Panel del Administrador — El Rival Más Débil</h2>
+            <button class="btn rival-btn" onclick="iniciarRival()">▶ INICIAR JUEGO</button>
+        </div>
+        <div class="admin-teams-row">
+            <label>Número de jugadores:</label>
+            <div class="team-count-controls">
+                <button onclick="cambiarJugadoresRival(-1)">−</button>
+                <span id="rival-player-count-display">6</span>
+                <button onclick="cambiarJugadoresRival(1)">+</button>
+            </div>
+            <small style="color:var(--gray);margin-left:10px;">Mín: 3 | Máx: 40 | Modo: 🟡 Grupo Reducido (≤15)</small>
+        </div>
+        <div id="rival-player-names-list" style="margin-bottom:24px;"></div>
+        <div class="admin-header" style="margin-top:10px;">
+            <h3 style="color:var(--gold);">📋 Preguntas generadas (editables)</h3>
+        </div>
+        <div id="admin-rival-questions"></div>
+    </div>
+
+    <div id="rival-screen">
+        <div class="rival-header">
+            <h2>🔴 EL RIVAL MÁS DÉBIL</h2>
+            <div class="rival-bote">
+                <div class="bote-label">BOTE ACUMULADO</div>
+                <div class="bote-val" id="rival-bote">$0</div>
+            </div>
+            <div class="rival-ronda-info">
+                Ronda <strong id="rival-ronda-num">1</strong><br>
+                Pregunta <strong id="rival-q-num-disp">1</strong> / <strong id="rival-q-total">—</strong>
+                <div id="rival-mode-info" style="font-size:0.75rem;margin-top:4px;color:#ffca28;font-style:italic;">⚙ Inicializando...</div>
+            </div>
+        </div>
+        <div class="rival-body">
+            <div class="cadena-row" id="rival-cadena"></div>
+            <div class="rival-players" id="rival-players-row"></div>
+            <div class="rival-question-box" id="rival-q-box">
+                <div class="rival-q-num" id="rival-q-label">PREGUNTA 1</div>
+                <div class="rival-q-text" id="rival-q-text">—</div>
+                <div class="rival-options" id="rival-q-options"></div>
+            </div>
+            <div class="rival-admin-controls">
+                <button class="rival-ctrl-btn btn-banco" onclick="rivalBancar()">💰 BANCAR</button>
+                <button class="rival-ctrl-btn btn-correcto" onclick="rivalRespuesta(true)">✓ CORRECTO</button>
+                <button class="rival-ctrl-btn btn-incorrecto" onclick="rivalRespuesta(false)">✗ INCORRECTO</button>
+                <button class="rival-ctrl-btn btn-sig-turno" id="btn-sig-turno" onclick="rivalSiguienteTurno()" style="display:none;">→ SIGUIENTE TURNO</button>
+            </div>
+            <div class="rival-vote-box" id="rival-vote-box" style="display:none;">
+                <h3>🗳️ ¿QUIÉN ES EL RIVAL MÁS DÉBIL?</h3>
+                <div class="vote-grid" id="rival-vote-grid"></div>
+            </div>
+        </div>
+    </div>
+
+</div>
+
+<div class="modal" id="clue-modal">
+    <div class="modal-content">
+        <div class="modal-points" id="modal-title-pts">—</div>
+        <div class="modal-clue" id="modal-clue-text">—</div>
+        <div class="timer-container"><div class="timer-bar" id="modal-timer"></div></div>
+        <div class="timer-label" id="timer-label">⏱ 30 segundos</div>
+        <div class="modal-answer" id="modal-answer-text"></div>
+        <div class="modal-actions">
+            <button class="btn-modal btn-reveal" id="btn-reveal-ans">REVELAR RESPUESTA CORRECTA</button>
+            <div class="modal-row" style="margin-top:10px;" id="assign-btns-row"></div>
+            <button class="btn-modal btn-close-modal" onclick="closeModal()" style="margin-top:15px;">CERRAR VENTANA</button>
+        </div>
+    </div>
+</div>
+
+<div class="rival-elim-overlay" id="elim-overlay">
+    <div class="elim-title">HAS SIDO ELIMINADO</div>
+    <div class="elim-name" id="elim-name-display">—</div>
+    <div class="elim-frase">"Eres el rival más débil. ¡Adiós!"</div>
+    <button class="elim-continue" onclick="cerrarEliminado()">CONTINUAR →</button>
+</div>
+
+<div class="winner-overlay" id="winner-overlay">
+    <div class="winner-title">🏆 ¡GANADOR DEL JUEGO!</div>
+    <div class="winner-name" id="winner-name-display">—</div>
+    <div class="winner-prize" id="winner-prize-display">$0</div>
+    <button class="winner-restart" onclick="location.reload()">JUGAR DE NUEVO</button>
+</div>
+
+<script>
+// ══════════════════════════════════════════════════════════════════════
+//  EL RIVAL MÁS DÉBIL — Motor de juego completo v2.0
+//  Lógica adaptativa: Grupo Reducido (≤15) / Grupo Masivo (>15)
+//  Descarte automático sin votación manual
+// ══════════════════════════════════════════════════════════════════════
+
+/* ─── ESTADO GLOBAL ─── */
+let currentGame   = null;   // 'jeopardy' | 'rival'
+let jeopardyData  = null;   // datos del juego Jeopardy
+let jeopardyTeams = [];     // equipos Jeopardy
+let timerInterval = null;   // temporizador Jeopardy
+
+/* ─── ESTADO RIVAL ─── */
+const RIVAL = {
+  players       : [],   // { name, correct, wrong, eliminated, questionsThisRound }
+  questions     : [],   // array de preguntas generadas
+  roundNum      : 1,
+  bote          : 0,
+  bankedTotal   : 0,
+  cadena        : 0,   // preguntas correctas en cadena actual
+  currentPlayerIdx : 0,  // índice en players[] del turno actual
+  currentQIdx   : 0,   // índice global en questions[]
+  queueOrder    : [],  // orden de turnos para la ronda actual
+  queuePos      : 0,   // posición dentro de queueOrder
+  mode          : 'reducido',  // 'reducido' | 'masivo'
+  maxQPerPlayer : 2,   // 2 en reducido, 1 en masivo
+  elimPending   : null, // jugador a eliminar (esperando cerrar overlay)
+  cadenaSlots   : [100,200,300,500,1000,2000,3000,5000,10000,25000],
+};
+
+/* ─── UTILIDADES DE PANTALLA ─── */
+const screens = ['game-selector','setup-screen','loading-screen','admin-screen',
+                 'admin-rival-screen','game-screen','rival-screen'];
+
+function showScreen(id) {
+  screens.forEach(s => {
+    const el = document.getElementById(s);
+    if (!el) return;
+    const isFlex = ['game-screen','rival-screen'].includes(s);
+    el.style.display = (s === id) ? (isFlex ? 'flex' : 'block') : 'none';
+  });
+  const nav = document.getElementById('global-nav');
+  if (nav) nav.style.display = ['admin-screen','admin-rival-screen','game-screen','rival-screen'].includes(id) ? 'flex' : 'none';
+}
+
+/* ─── SELECTOR DE JUEGO ─── */
+function seleccionarJuego(tipo) {
+  currentGame = tipo;
+  if (tipo === 'jeopardy') {
+    document.getElementById('setup-game-label').textContent = '🎯 Configurando: JEOPARDY';
+    document.getElementById('generate-btn').textContent = '¡PROCESAR E INICIAR!';
+    document.getElementById('generate-btn').onclick = procesarContenido;
+  } else {
+    document.getElementById('setup-game-label').textContent = '🔴 Configurando: EL RIVAL MÁS DÉBIL';
+    document.getElementById('generate-btn').textContent = '¡PROCESAR E INICIAR!';
+    document.getElementById('generate-btn').onclick = procesarContenidoRival;
+  }
+  showScreen('setup-screen');
+}
+
+function volverSelector() { showScreen('game-selector'); }
+function irAlInicio()     { if (confirm('¿Volver al inicio? Se perderá el progreso.')) location.reload(); }
+
+function irAlAdminMapeo() {
+  if (currentGame === 'jeopardy') showScreen('admin-screen');
+  else if (currentGame === 'rival') showScreen('admin-rival-screen');
+}
+
+/* ─── LECTURA DE PDF ─── */
+async function leerPDF(file) {
+  const arrayBuffer = await file.arrayBuffer();
+  const pdf = await pdfjsLib.getDocument({ data: arrayBuffer }).promise;
+  let text = '';
+  for (let i = 1; i <= pdf.numPages; i++) {
+    const page = await pdf.getPage(i);
+    const content = await page.getTextContent();
+    text += content.items.map(it => it.str).join(' ') + '\n';
+  }
+  return text;
+}
+
+/* ══════════════════════════════════════════════════════════════════════
+   JEOPARDY — lógica original conservada
+   ══════════════════════════════════════════════════════════════════════ */
+
+let numEquipos = 3;
+function cambiarEquipos(delta) {
+  numEquipos = Math.max(1, Math.min(8, numEquipos + delta));
+  document.getElementById('team-count-display').textContent = numEquipos;
+}
+
+async function procesarContenido() {
+  const apiKey = document.getElementById('api-key').value.trim();
+  const fileInput = document.getElementById('file-input');
+  let texto = document.getElementById('text-input').value.trim();
+  if (!apiKey) { alert('Por favor ingresa tu API Key de Gemini.'); return; }
+  if (fileInput.files.length > 0) {
+    const file = fileInput.files[0];
+    if (file.type === 'application/pdf') texto = await leerPDF(file);
+    else texto = await file.text();
+  }
+  if (!texto) { alert('Por favor carga un archivo o pega texto.'); return; }
+  showScreen('loading-screen');
+  const prompt = `Eres un generador de contenido para el juego Jeopardy educativo. Basándote en el siguiente texto, crea exactamente 5 categorías temáticas. Cada categoría debe tener exactamente 5 preguntas con valores de 200, 400, 600, 800 y 1000 puntos. Para cada pregunta, además de la pista y respuesta, genera 4 opciones de respuesta (A, B, C, D) donde UNA es la correcta. Responde SOLO con JSON válido, sin explicaciones, sin bloques de código. Formato exacto:
+{"categories":[{"name":"NOMBRE CATEGORÍA","questions":[{"points":200,"clue":"Pista","answer":"Respuesta correcta","options":["Opción A","Opción B","Opción C","Opción D"],"correct":0}]}]}
+El campo "correct" es el índice (0-3) de la opción correcta en el array "options".
+TEXTO: ${texto.substring(0, 8000)}`;
+  try {
+    const res = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash-latest:generateContent?key=${apiKey}`, {
+      method: 'POST', headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ contents: [{ parts: [{ text: prompt }] }] })
+    });
+    const data = await res.json();
+    if (!res.ok) throw new Error(data.error?.message || 'Error API');
+    let raw = data.candidates[0].content.parts[0].text.trim();
+    raw = raw.replace(/```json|```/g, '').trim();
+    jeopardyData = JSON.parse(raw);
+    renderAdminScreen();
+    showScreen('admin-screen');
+  } catch (e) {
+    showScreen('setup-screen');
+    alert('Error generando preguntas: ' + e.message);
+  }
+}
+
+function renderAdminScreen() {
+  const container = document.getElementById('admin-categories');
+  if (!container || !jeopardyData) return;
+  container.innerHTML = '';
+  jeopardyData.categories.forEach((cat, ci) => {
+    const block = document.createElement('div');
+    block.className = 'category-block';
+    let qHtml = cat.questions.map((q, qi) => `
+      <div class="question-card">
+        <div class="pts-badge">${q.points} pts</div>
+        <div class="question-field"><label>Pista</label>
+          <textarea oninput="jeopardyData.categories[${ci}].questions[${qi}].clue=this.value">${q.clue}</textarea></div>
+        <div class="question-field"><label>Respuesta correcta</label>
+          <textarea oninput="jeopardyData.categories[${ci}].questions[${qi}].answer=this.value">${q.answer}</textarea></div>
+        <div class="options-grid">
+          ${(q.options||[]).map((opt,oi)=>`<div class="option-field"><label>${['A','B','C','D'][oi]}</label>
+            <textarea oninput="jeopardyData.categories[${ci}].questions[${qi}].options[${oi}]=this.value">${opt}</textarea></div>`).join('')}
+        </div>
+        <div><label style="margin-top:8px;">Opción correcta: </label>
+          <select class="correct-select" onchange="jeopardyData.categories[${ci}].questions[${qi}].correct=parseInt(this.value)">
+            ${['A','B','C','D'].map((l,i)=>`<option value="${i}"${q.correct===i?' selected':''}>${l}</option>`).join('')}
+          </select></div>
+      </div>`).join('');
+    block.innerHTML = `<h3>Categoría ${ci+1}: <input class="cat-name-input" value="${cat.name}" oninput="jeopardyData.categories[${ci}].name=this.value"></h3>${qHtml}`;
+    container.appendChild(block);
+  });
+}
+
+function iniciarJuego() {
+  jeopardyTeams = [];
+  for (let i = 0; i < numEquipos; i++) jeopardyTeams.push({ name: `Equipo ${i+1}`, score: 0 });
+  renderBoard();
+  renderScoreboard();
+  showScreen('game-screen');
+}
+
+function renderBoard() {
+  const board = document.getElementById('board-grid');
+  if (!board || !jeopardyData) return;
+  const cats = jeopardyData.categories;
+  board.style.gridTemplateColumns = `repeat(${cats.length}, 1fr)`;
+  board.innerHTML = '';
+  cats.forEach(cat => {
+    const hd = document.createElement('div');
+    hd.className = 'cat-header';
+    hd.textContent = cat.name;
+    board.appendChild(hd);
+  });
+  const maxQ = Math.max(...cats.map(c => c.questions.length));
+  for (let qi = 0; qi < maxQ; qi++) {
+    cats.forEach((cat, ci) => {
+      const q = cat.questions[qi];
+      const cell = document.createElement('div');
+      if (q) {
+        cell.className = 'cell-card';
+        cell.textContent = `$${q.points}`;
+        cell.onclick = () => abrirPregunta(ci, qi);
+      } else {
+        cell.className = 'cell-card disabled';
+      }
+      cell.id = `cell-${ci}-${qi}`;
+      board.appendChild(cell);
+    });
+  }
+}
+
+function renderScoreboard() {
+  const sb = document.getElementById('scoreboard-row');
+  if (!sb) return;
+  sb.innerHTML = jeopardyTeams.map((t, i) => `
+    <div class="team-score">
+      <h3>${t.name}</h3>
+      <div class="score-val" id="score-val-${i}">$${t.score}</div>
+      <div class="score-ctrls">
+        <button class="btn-sm btn-plus" onclick="cambiarScore(${i},1)">+</button>
+        <button class="btn-sm btn-minus" onclick="cambiarScore(${i},-1)">−</button>
+      </div>
+    </div>`).join('');
+}
+
+let currentModalPoints = 0;
+function abrirPregunta(ci, qi) {
+  const q = jeopardyData.categories[ci].questions[qi];
+  if (!q) return;
+  currentModalPoints = q.points;
+  document.getElementById('modal-title-pts').textContent = `$${q.points}`;
+  document.getElementById('modal-clue-text').textContent = q.clue;
+  document.getElementById('modal-answer-text').style.display = 'none';
+  document.getElementById('modal-answer-text').textContent = '✔ ' + q.answer;
+  const cell = document.getElementById(`cell-${ci}-${qi}`);
+  if (cell) { cell.className = 'cell-card disabled'; cell.onclick = null; }
+  iniciarTimer();
+  const row = document.getElementById('assign-btns-row');
+  row.innerHTML = jeopardyTeams.map((t, i) => `<button class="team-assign-btn" onclick="asignarPuntos(${i},${q.points})">+$${q.points} a ${t.name}</button>`).join('');
+  document.getElementById('clue-modal').style.display = 'flex';
+  document.getElementById('btn-reveal-ans').style.display = 'block';
+}
+
+function iniciarTimer() {
+  clearInterval(timerInterval);
+  let seg = 30;
+  const bar = document.getElementById('modal-timer');
+  const lbl = document.getElementById('timer-label');
+  if (bar) bar.style.width = '100%';
+  if (lbl) lbl.textContent = `⏱ ${seg} segundos`;
+  timerInterval = setInterval(() => {
+    seg--;
+    if (bar) bar.style.width = `${(seg/30)*100}%`;
+    if (lbl) lbl.textContent = `⏱ ${seg} segundos`;
+    if (seg <= 0) { clearInterval(timerInterval); if (lbl) lbl.textContent = '⏱ ¡Tiempo!'; }
+  }, 1000);
+}
+
+function asignarPuntos(teamIdx, pts) {
+  jeopardyTeams[teamIdx].score += pts;
+  document.getElementById(`score-val-${teamIdx}`).textContent = `$${jeopardyTeams[teamIdx].score}`;
+  closeModal();
+}
+
+function cambiarScore(teamIdx, dir) {
+  jeopardyTeams[teamIdx].score = Math.max(0, jeopardyTeams[teamIdx].score + dir * currentModalPoints || 100);
+  document.getElementById(`score-val-${teamIdx}`).textContent = `$${jeopardyTeams[teamIdx].score}`;
+}
+
+document.addEventListener('DOMContentLoaded', () => {
+  const revBtn = document.getElementById('btn-reveal-ans');
+  if (revBtn) revBtn.onclick = () => {
+    const ans = document.getElementById('modal-answer-text');
+    if (ans) { ans.style.display = 'block'; revBtn.style.display = 'none'; }
+  };
+});
+
+function closeModal() {
+  clearInterval(timerInterval);
+  document.getElementById('clue-modal').style.display = 'none';
+}
+
+function guardarPartida() {
+  const data = { game: currentGame, teams: jeopardyTeams, board: jeopardyData };
+  localStorage.setItem('partida_guardada', JSON.stringify(data));
+  alert('✅ Partida guardada.');
+}
+
+/* ══════════════════════════════════════════════════════════════════════
+   EL RIVAL MÁS DÉBIL — Motor completo v2.0
+   ══════════════════════════════════════════════════════════════════════ */
+
+/* ── CONFIGURACIÓN DINÁMICA DE JUGADORES (3–40) ── */
+let numJugadoresRival = 6;
+
+function cambiarJugadoresRival(delta) {
+  numJugadoresRival = Math.max(3, Math.min(40, numJugadoresRival + delta));
+  document.getElementById('rival-player-count-display').textContent = numJugadoresRival;
+  document.querySelector('#admin-rival-screen .admin-teams-row small').textContent =
+    `Mín: 3 | Máx: 40 | Modo: ${numJugadoresRival <= 15 ? '🟡 Grupo Reducido (≤15)' : '🔴 Grupo Masivo (>15)'}`;
+  renderRivalPlayerNames();
+}
+
+function renderRivalPlayerNames() {
+  const list = document.getElementById('rival-player-names-list');
+  if (!list) return;
+  const current = [];
+  list.querySelectorAll('.rival-name-input').forEach(inp => current.push(inp.value));
+  list.innerHTML = '';
+  const grid = document.createElement('div');
+  grid.style.cssText = 'display:grid;grid-template-columns:repeat(auto-fill,minmax(200px,1fr));gap:10px;margin-bottom:10px;';
+  for (let i = 0; i < numJugadoresRival; i++) {
+    const wrapper = document.createElement('div');
+    wrapper.style.cssText = 'display:flex;align-items:center;gap:6px;';
+    wrapper.innerHTML = `<span style="color:var(--gold);font-weight:bold;min-width:22px;">${i+1}.</span>
+      <input class="rival-name-input" type="text" placeholder="Participante ${i+1}"
+        value="${current[i] || ''}"
+        style="background:#1a0a0a;border:1px solid #6b0000;color:white;border-radius:5px;padding:8px 10px;flex:1;font-size:0.95rem;">`;
+    grid.appendChild(wrapper);
+  }
+  list.appendChild(grid);
+
+  // Botón Autogenerar
+  const autoBtn = document.createElement('button');
+  autoBtn.className = 'btn rival-btn';
+  autoBtn.style.cssText = 'width:auto;padding:9px 22px;margin-bottom:6px;margin-right:10px;';
+  autoBtn.innerHTML = '⚡ Autogenerar Nombres';
+  autoBtn.onclick = autogenerarNombres;
+  list.appendChild(autoBtn);
+
+  const hint = document.createElement('small');
+  hint.style.color = 'var(--gray)';
+  hint.textContent = 'Deja vacíos para autogenerar, o escribe los nombres reales de los participantes.';
+  list.appendChild(hint);
+}
+
+function autogenerarNombres() {
+  const inputs = document.querySelectorAll('.rival-name-input');
+  inputs.forEach((inp, i) => {
+    if (!inp.value.trim()) inp.value = `Participante ${i+1}`;
+  });
+}
+
+/* ── PROCESAMIENTO Y GENERACIÓN DE PREGUNTAS ── */
+async function procesarContenidoRival() {
+  const apiKey = document.getElementById('api-key').value.trim();
+  const fileInput = document.getElementById('file-input');
+  let texto = document.getElementById('text-input').value.trim();
+  if (!apiKey) { alert('Por favor ingresa tu API Key de Gemini.'); return; }
+  if (fileInput.files.length > 0) {
+    const file = fileInput.files[0];
+    if (file.type === 'application/pdf') texto = await leerPDF(file);
+    else texto = await file.text();
+  }
+  if (!texto) { alert('Por favor carga un archivo o pega texto.'); return; }
+  showScreen('loading-screen');
+
+  // Calculamos cuántas preguntas necesitamos: máximo 2 por jugador (modo reducido)
+  // Para 40 jugadores * 2 preguntas = 80 preguntas. Pedimos suficientes para cubrir múltiples rondas.
+  const numQ = Math.min(60, Math.max(20, numJugadoresRival * 3));
+  const prompt = `Eres un generador de preguntas de opción múltiple para el juego "El Rival Más Débil" en un contexto de capacitación educativa. Basándote en el texto proporcionado, genera exactamente ${numQ} preguntas de opción múltiple, cada una con 4 opciones (A, B, C, D) donde solo UNA es correcta. Responde SOLO con JSON válido sin explicaciones ni bloques de código. Formato exacto:
+{"questions":[{"q":"Pregunta aquí","options":["Opción A","Opción B","Opción C","Opción D"],"correct":0}]}
+El campo "correct" es el índice (0-3) de la opción correcta.
+TEXTO: ${texto.substring(0, 9000)}`;
+
+  try {
+    const res = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash-latest:generateContent?key=${apiKey}`, {
+      method: 'POST', headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ contents: [{ parts: [{ text: prompt }] }] })
+    });
+    const data = await res.json();
+    if (!res.ok) throw new Error(data.error?.message || 'Error API');
+    let raw = data.candidates[0].content.parts[0].text.trim();
+    raw = raw.replace(/```json|```/g, '').trim();
+    const parsed = JSON.parse(raw);
+    RIVAL.questions = parsed.questions || [];
+    renderAdminRivalScreen();
+    showScreen('admin-rival-screen');
+  } catch (e) {
+    showScreen('setup-screen');
+    alert('Error generando preguntas: ' + e.message);
+  }
+}
+
+function renderAdminRivalScreen() {
+  renderRivalPlayerNames();
+  const container = document.getElementById('admin-rival-questions');
+  if (!container) return;
+  container.innerHTML = '';
+  RIVAL.questions.forEach((q, qi) => {
+    const card = document.createElement('div');
+    card.className = 'question-card';
+    card.innerHTML = `<div class="pts-badge">Pregunta ${qi+1}</div>
+      <div class="question-field"><label>Enunciado</label>
+        <textarea oninput="RIVAL.questions[${qi}].q=this.value">${q.q}</textarea></div>
+      <div class="options-grid">
+        ${q.options.map((opt,oi)=>`<div class="option-field"><label>${['A','B','C','D'][oi]}</label>
+          <textarea oninput="RIVAL.questions[${qi}].options[${oi}]=this.value">${opt}</textarea></div>`).join('')}
+      </div>
+      <div><label style="margin-top:8px;">Respuesta correcta: </label>
+        <select class="correct-select" onchange="RIVAL.questions[${qi}].correct=parseInt(this.value)">
+          ${['A','B','C','D'].map((l,i)=>`<option value="${i}"${q.correct===i?' selected':''}>${l}</option>`).join('')}
+        </select></div>`;
+    container.appendChild(card);
+  });
+}
+
+/* ── INICIAR EL JUEGO RIVAL ── */
+function iniciarRival() {
+  const inputs = document.querySelectorAll('.rival-name-input');
+  const names = [];
+  inputs.forEach((inp, i) => {
+    const n = inp.value.trim() || `Participante ${i+1}`;
+    names.push(n);
+  });
+
+  if (RIVAL.questions.length < 2) { alert('Necesitas al menos 2 preguntas para iniciar.'); return; }
+
+  // Determinar modo según número de jugadores
+  const N = names.length;
+  RIVAL.mode = N <= 15 ? 'reducido' : 'masivo';
+  RIVAL.maxQPerPlayer = RIVAL.mode === 'reducido' ? 2 : 1;
+
+  // Inicializar jugadores
+  RIVAL.players = names.map(name => ({
+    name,
+    correct: 0,
+    wrong: 0,
+    eliminated: false,
+    questionsThisRound: 0
+  }));
+
+  RIVAL.roundNum = 1;
+  RIVAL.bote = 0;
+  RIVAL.bankedTotal = 0;
+  RIVAL.cadena = 0;
+  RIVAL.currentQIdx = 0;
+  RIVAL.elimPending = null;
+
+  construirColaRonda();
+  showScreen('rival-screen');
+  renderRival();
+  mostrarModoInfo();
+}
+
+function construirColaRonda() {
+  // Reiniciar contador de preguntas por ronda para activos
+  RIVAL.players.forEach(p => { if (!p.eliminated) p.questionsThisRound = 0; });
+
+  // Construir orden de turnos: en modo reducido se hacen dos pasadas (todos responden 1, luego todos responden 2)
+  const activos = RIVAL.players.map((p, i) => i).filter(i => !RIVAL.players[i].eliminated);
+
+  if (RIVAL.mode === 'reducido') {
+    // Primera vuelta + Segunda vuelta
+    RIVAL.queueOrder = [...activos, ...activos];
+  } else {
+    // Solo una pregunta por jugador
+    RIVAL.queueOrder = [...activos];
+  }
+  RIVAL.queuePos = 0;
+}
+
+function mostrarModoInfo() {
+  const N = RIVAL.players.filter(p => !p.eliminated).length;
+  const modeText = RIVAL.mode === 'reducido'
+    ? `🟡 MODO GRUPO REDUCIDO (${N} jugadores) — Hasta 2 preguntas por persona`
+    : `🔴 MODO GRUPO MASIVO (${N} jugadores) — 1 pregunta de oro por persona`;
+  const infoEl = document.getElementById('rival-mode-info');
+  if (infoEl) infoEl.textContent = modeText;
+}
+
+/* ── RENDER PRINCIPAL DEL RIVAL ── */
+function renderRival() {
+  // Header
+  document.getElementById('rival-ronda-num').textContent = RIVAL.roundNum;
+  document.getElementById('rival-bote').textContent = `$${RIVAL.bote.toLocaleString()}`;
+  const activos = RIVAL.players.filter(p => !p.eliminated).length;
+  document.getElementById('rival-q-total').textContent = activos * RIVAL.maxQPerPlayer;
+
+  // Cadena visual
+  renderCadena();
+
+  // Jugadores
+  const row = document.getElementById('rival-players-row');
+  if (row) {
+    row.innerHTML = RIVAL.players.map((p, i) => {
+      const activeIdx = RIVAL.queueOrder[RIVAL.queuePos];
+      const activo = activeIdx === i;
+      return `<div class="rival-player ${p.eliminated ? 'eliminado' : ''} ${activo && !p.eliminated ? 'activo' : ''}">
+        ${activo && !p.eliminated ? '<div class="turno-badge">TURNO</div>' : ''}
+        <div class="player-name">${p.name}</div>
+        <div class="player-correct">✓ ${p.correct}</div>
+        <div class="player-wrong">✗ ${p.wrong}</div>
+        ${RIVAL.mode === 'reducido' ? `<div style="font-size:0.7rem;color:#aaa;">Q: ${p.questionsThisRound}/${RIVAL.maxQPerPlayer}</div>` : ''}
+      </div>`;
+    }).join('');
+  }
+
+  // Pregunta actual
+  cargarPreguntaActual();
+
+  // Ocultar vote box (eliminado el voto manual)
+  const voteBox = document.getElementById('rival-vote-box');
+  if (voteBox) voteBox.style.display = 'none';
+
+  // Botón siguiente turno
+  const btnSig = document.getElementById('btn-sig-turno');
+  if (btnSig) btnSig.style.display = 'none';
+}
+
+function renderCadena() {
+  const cadenaEl = document.getElementById('rival-cadena');
+  if (!cadenaEl) return;
+  const slots = RIVAL.cadenaSlots;
+  cadenaEl.innerHTML = slots.map((val, i) => {
+    let cls = 'cadena-slot';
+    if (i < RIVAL.cadena) cls += ' lleno';
+    return `<div class="${cls}" title="$${val.toLocaleString()}">${i < RIVAL.cadena ? '★' : (i+1)}</div>
+      ${i < slots.length-1 ? '<div class="cadena-sep">›</div>' : ''}`;
+  }).join('');
+}
+
+function cargarPreguntaActual() {
+  const playerIdx = RIVAL.queueOrder[RIVAL.queuePos];
+  const player = RIVAL.players[playerIdx];
+  const q = RIVAL.questions[RIVAL.currentQIdx];
+
+  document.getElementById('rival-q-num-disp').textContent = RIVAL.queuePos + 1;
+  document.getElementById('rival-q-label').textContent =
+    `PREGUNTA PARA: ${player ? player.name.toUpperCase() : '—'}`;
+
+  if (!q) {
+    document.getElementById('rival-q-text').textContent = 'Sin más preguntas disponibles.';
+    document.getElementById('rival-q-options').innerHTML = '';
+    return;
+  }
+
+  document.getElementById('rival-q-text').textContent = q.q;
+  const opts = document.getElementById('rival-q-options');
+  if (opts) {
+    opts.innerHTML = q.options.map((opt, i) =>
+      `<button class="rival-opt-btn" onclick="seleccionarOpcionRival(${i})">
+        <span class="rival-opt-letter">${['A','B','C','D'][i]}</span>${opt}
+      </button>`
+    ).join('');
+  }
+}
+
+/* ── CONTROL DE RESPUESTAS ── */
+function seleccionarOpcionRival(idx) {
+  // Resaltar la opción seleccionada visualmente
+  const q = RIVAL.questions[RIVAL.currentQIdx];
+  if (!q) return;
+  const btns = document.querySelectorAll('.rival-opt-btn');
+  btns.forEach((btn, i) => {
+    btn.disabled = true;
+    if (i === q.correct) btn.classList.add('correct');
+    else if (i === idx) btn.classList.add('wrong');
+  });
+}
+
+function rivalRespuesta(correcto) {
+  const playerIdx = RIVAL.queueOrder[RIVAL.queuePos];
+  const player = RIVAL.players[playerIdx];
+  if (!player || player.eliminated) { avanzarTurno(); return; }
+
+  player.questionsThisRound++;
+
+  if (correcto) {
+    player.correct++;
+    RIVAL.cadena = Math.min(RIVAL.cadena + 1, RIVAL.cadenaSlots.length);
+    // Avanzar pregunta y turno
+    RIVAL.currentQIdx++;
+    avanzarTurno();
+  } else {
+    player.wrong++;
+    RIVAL.cadena = 0; // se rompe la cadena
+    RIVAL.currentQIdx++;
+
+    // ── DESCARTE AUTOMÁTICO ──
+    let eliminado = false;
+    if (RIVAL.mode === 'reducido' && player.wrong >= 2) {
+      eliminado = true;
+    } else if (RIVAL.mode === 'masivo' && player.wrong >= 1) {
+      eliminado = true;
+    }
+
+    if (eliminado) {
+      player.eliminated = true;
+      RIVAL.elimPending = playerIdx;
+      // Render para mostrar el estado actualizado antes del overlay
+      renderRival();
+      mostrarOverlayEliminado(player.name);
+      return; // Pausar: el flujo continúa desde cerrarEliminado()
+    } else {
+      avanzarTurno(); // avanzarTurno ya hace renderRival() + verificarFinJuego()
+    }
+  }
+}
+
+function rivalBancar() {
+  if (RIVAL.cadena > 0) {
+    const ganado = RIVAL.cadenaSlots[RIVAL.cadena - 1];
+    RIVAL.bankedTotal += ganado;
+    RIVAL.bote += ganado;
+    RIVAL.cadena = 0;
+    document.getElementById('rival-bote').textContent = `$${RIVAL.bote.toLocaleString()}`;
+    renderCadena();
+  }
+}
+
+function avanzarTurno() {
+  // Avanzar al siguiente turno, saltando eliminados
+  RIVAL.queuePos++;
+  while (
+    RIVAL.queuePos < RIVAL.queueOrder.length &&
+    RIVAL.players[RIVAL.queueOrder[RIVAL.queuePos]]?.eliminated
+  ) {
+    RIVAL.queuePos++;
+  }
+
+  // Si se agotó la cola → fin de ronda
+  if (RIVAL.queuePos >= RIVAL.queueOrder.length) {
+    cerrarRonda();
+    return; // cerrarRonda maneja el flujo desde aquí
+  }
+
+  // Verificar ganador antes de renderizar
+  const sobrevivientes = RIVAL.players.filter(p => !p.eliminated);
+  if (sobrevivientes.length === 1) {
+    mostrarGanador(sobrevivientes[0]);
+    return;
+  }
+
+  renderRival();
+}
+
+function rivalSiguienteTurno() {
+  avanzarTurno();
+}
+
+/* ── FIN DE RONDA ── */
+function cerrarRonda() {
+  const sobrevivientes = RIVAL.players.filter(p => !p.eliminated);
+
+  if (sobrevivientes.length === 0) return; // no debería pasar
+  if (sobrevivientes.length === 1) {
+    mostrarGanador(sobrevivientes[0]);
+    return;
+  }
+
+  RIVAL.roundNum++;
+  // Determinar si el modo cambia (puede haber cambiado el número de activos)
+  const N = sobrevivientes.length;
+  RIVAL.mode = N <= 15 ? 'reducido' : 'masivo';
+  RIVAL.maxQPerPlayer = RIVAL.mode === 'reducido' ? 2 : 1;
+
+  // Mostrar separador de ronda brevemente
+  mostrarTransicionRonda(sobrevivientes.length);
+}
+
+function mostrarTransicionRonda(numActivos) {
+  const overlay = document.createElement('div');
+  overlay.style.cssText = `position:fixed;top:0;left:0;width:100%;height:100%;background:rgba(0,0,0,0.93);
+    z-index:3000;display:flex;flex-direction:column;align-items:center;justify-content:center;text-align:center;padding:30px;`;
+  overlay.innerHTML = `
+    <div style="color:#ff6b6b;font-size:2.5rem;font-weight:bold;letter-spacing:3px;margin-bottom:20px;text-shadow:0 0 20px #ff0000;">
+      🔔 FIN DE RONDA ${RIVAL.roundNum - 1}
+    </div>
+    <div style="color:var(--gold);font-size:1.8rem;font-weight:bold;margin-bottom:10px;">
+      ${numActivos} PARTICIPANTE${numActivos !== 1 ? 'S' : ''} EN PIE
+    </div>
+    <div style="color:#ccc;font-size:1.1rem;margin-bottom:30px;">
+      Modo: ${RIVAL.mode === 'reducido' ? '🟡 Grupo Reducido' : '🔴 Grupo Masivo'} — ${RIVAL.maxQPerPlayer} pregunta${RIVAL.maxQPerPlayer > 1 ? 's' : ''} por persona
+    </div>
+    <button onclick="this.parentElement.remove();iniciarNuevaRonda();"
+      style="background:var(--danger);color:white;border:none;padding:14px 32px;border-radius:8px;font-size:1.1rem;font-weight:bold;cursor:pointer;">
+      ▶ INICIAR RONDA ${RIVAL.roundNum}
+    </button>`;
+  document.body.appendChild(overlay);
+}
+
+function iniciarNuevaRonda() {
+  construirColaRonda();
+  mostrarModoInfo();
+  renderRival();
+}
+
+/* ── VERIFICAR FIN DE JUEGO ── */
+function verificarFinJuego() {
+  const sobrevivientes = RIVAL.players.filter(p => !p.eliminated);
+  if (sobrevivientes.length === 1) {
+    mostrarGanador(sobrevivientes[0]);
+  }
+}
+
+/* ── OVERLAY ELIMINADO (gatito triste + lluvia) ── */
+function mostrarOverlayEliminado(nombre) {
+  const overlay = document.getElementById('elim-overlay');
+  document.getElementById('elim-name-display').textContent = nombre;
+
+  // Inyectar animación de gatito triste y lluvia si no existe
+  let animContainer = document.getElementById('elim-anim-container');
+  if (!animContainer) {
+    animContainer = document.createElement('div');
+    animContainer.id = 'elim-anim-container';
+    animContainer.style.cssText = 'position:absolute;top:0;left:0;width:100%;height:100%;pointer-events:none;overflow:hidden;z-index:0;';
+    overlay.style.position = 'fixed';
+    overlay.insertBefore(animContainer, overlay.firstChild);
+  }
+
+  // Lluvia de gotas
+  animContainer.innerHTML = generarLluvia() + `
+    <div style="position:absolute;bottom:80px;left:50%;transform:translateX(-50%);font-size:7rem;animation:sadKittyBounce 1s ease-in-out infinite;z-index:1;">😿</div>`;
+
+  if (!document.getElementById('elim-keyframes')) {
+    const style = document.createElement('style');
+    style.id = 'elim-keyframes';
+    style.textContent = `
+      @keyframes sadKittyBounce { 0%,100%{transform:translateX(-50%) translateY(0);} 50%{transform:translateX(-50%) translateY(-12px);} }
+      @keyframes rainFall { 0%{transform:translateY(-20px);opacity:0;} 10%{opacity:1;} 90%{opacity:1;} 100%{transform:translateY(110vh);opacity:0;} }
+    `;
+    document.head.appendChild(style);
+  }
+
+  overlay.classList.add('show');
+}
+
+function generarLluvia() {
+  let drops = '';
+  for (let i = 0; i < 80; i++) {
+    const left = Math.random() * 100;
+    const delay = Math.random() * 3;
+    const dur = 0.8 + Math.random() * 1.5;
+    const h = 15 + Math.random() * 25;
+    drops += `<div style="position:absolute;left:${left}%;top:-30px;width:2px;height:${h}px;
+      background:linear-gradient(to bottom,transparent,#4fc3f7);border-radius:2px;
+      animation:rainFall ${dur}s ${delay}s linear infinite;"></div>`;
+  }
+  return drops;
+}
+
+function cerrarEliminado() {
+  const overlay = document.getElementById('elim-overlay');
+  overlay.classList.remove('show');
+  // Limpiar animación
+  const anim = document.getElementById('elim-anim-container');
+  if (anim) anim.innerHTML = '';
+
+  // Verificar si solo queda 1 antes de continuar
+  const sobrevivientes = RIVAL.players.filter(p => !p.eliminated);
+  if (sobrevivientes.length <= 1) {
+    if (sobrevivientes.length === 1) mostrarGanador(sobrevivientes[0]);
+    return;
+  }
+
+  // Delegar en avanzarTurno para mover al siguiente jugador válido
+  // (avanzarTurno incrementa queuePos internamente)
+  avanzarTurno();
+}
+
+/* ── GANADOR ── */
+function mostrarGanador(player) {
+  document.getElementById('winner-name-display').textContent = player.name;
+  document.getElementById('winner-prize-display').textContent =
+    `💰 Bote acumulado: $${RIVAL.bote.toLocaleString()} | ✓ ${player.correct} correctas`;
+  const wo = document.getElementById('winner-overlay');
+
+  // Animación de gatito feliz
+  let animEl = document.getElementById('winner-anim');
+  if (!animEl) {
+    animEl = document.createElement('div');
+    animEl.id = 'winner-anim';
+    animEl.style.cssText = 'font-size:5rem;margin-bottom:20px;animation:winKitty 0.6s ease-in-out infinite alternate;';
+    animEl.textContent = '😸';
+    wo.insertBefore(animEl, wo.firstChild);
+  }
+
+  if (!document.getElementById('winner-keyframes')) {
+    const style = document.createElement('style');
+    style.id = 'winner-keyframes';
+    style.textContent = `@keyframes winKitty{0%{transform:scale(1) rotate(-5deg);}100%{transform:scale(1.15) rotate(5deg);}}`;
+    document.head.appendChild(style);
+  }
+
+  wo.classList.add('show');
+}
+
+/* ── INFO DE MODO ── */
+// Elemento de modo en rival-screen (se inyecta si no existe)
+function asegurarModoInfo() {
+  if (!document.getElementById('rival-mode-info')) {
+    const rivalHeader = document.querySelector('.rival-ronda-info');
+    if (rivalHeader) {
+      const modeDiv = document.createElement('div');
+      modeDiv.id = 'rival-mode-info';
+      modeDiv.style.cssText = 'font-size:0.8rem;margin-top:4px;color:#ffca28;';
+      rivalHeader.appendChild(modeDiv);
+    }
+  }
+}
+
+/* ─── INIT ─── */
+document.addEventListener('DOMContentLoaded', () => {
+  // Verificar partida guardada
+  const saved = localStorage.getItem('partida_guardada');
+  const resumeBtn = document.getElementById('btn-resume-game');
+  if (saved && resumeBtn) resumeBtn.style.display = 'block';
+
+  // Inicializar límites en admin-rival con texto correcto
+  const rivalSmall = document.querySelector('#admin-rival-screen .admin-teams-row small');
+  if (rivalSmall) rivalSmall.textContent = 'Mín: 3 | Máx: 40 | Modo: 🟡 Grupo Reducido (≤15)';
+
+  asegurarModoInfo();
+  showScreen('game-selector');
+});
+
+</script>
+</body>
+</html>

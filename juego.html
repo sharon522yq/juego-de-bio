@@ -1,0 +1,658 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>JEOPARDY</title>
+
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.4.120/pdf.min.js"></script>
+    <style>
+        :root {
+            --blue-dark: #53147E;
+            --blue-classic: #53147E;
+            --blue-bright: #f9fd04;
+            --gold: #eeea1b;
+            --white: #F9F9F9;
+            --gray: #f3eeee;
+            --danger: #C0001A;
+            --success: #2DA91A;
+        }
+        * { box-sizing: border-box; margin: 0; padding: 0; font-family: 'Arial', sans-serif; }
+        body {
+            background-color: var(--blue-dark);
+            color: var(--white);
+            min-height: 100vh;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: flex-start;
+            padding: 20px;
+        }
+        header { text-align: center; margin-bottom: 20px; }
+        header h1 { color: var(--gold); font-size: 2.5rem; text-shadow: 2px 2px var(--blue-classic); margin-bottom: 5px; }
+        header p { color: var(--gray); font-style: italic; }
+
+      .container { width: 100%; max-width: 1200px; background: rgba(83,20,126,0.05); border-radius: 12px; padding: 25px; border: 1px solid rgba(194,166,119,0.2); }
+
+        #setup-screen { display: block; }
+      .form-group { margin-bottom: 20px; }
+        label { display: block; margin-bottom: 8px; color: var(--gold); font-weight: bold; }
+        input[type="text"], input[type="password"], input[type="number"], textarea, input[type="file"] {
+            width: 100%; padding: 12px; border-radius: 6px; border: 2px solid #53147E;
+            background-color: #F9F9F9; color: #2C2C2C; font-size: 1rem;
+        }
+        input[type="number"] { width: auto; min-width: 80px; }
+        input[type="text"]:focus, input[type="password"]:focus, input[type="number"]:focus, textarea:focus { border-color: var(--gold); outline: none; }
+        textarea { height: 150px; resize: vertical; }
+      .btn { background-color: var(--gold); color: var(--blue-dark); border: none; padding: 8px 16px; font-size: 1.1rem; font-weight: bold; border-radius: 6px; cursor: pointer; transition: all 0.2s ease; width: 100%; }
+      .btn:hover { background-color: #D4B896; transform: translateY(-2px); }
+      .btn-secondary { background-color: #53147E; color: white; border: 1px solid var(--blue-bright); margin-top:10px; }
+      .btn-secondary:hover { background-color: var(--blue-bright); transform: translateY(-2px); }
+
+        #loading-screen { display: none; text-align: center; padding: 40px 0; }
+      .spinner { border: 6px solid rgba(83,20,126,0.2); width: 60px; height: 60px; border-left-color: var(--gold); border-radius: 50%; animation: spin 1s linear infinite; margin: 0 auto 20px auto; }
+        @keyframes spin { 0%{transform:rotate(0deg)} 100%{transform:rotate(360deg)} }
+
+        #admin-screen { display: none; }
+      .admin-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px; flex-wrap: wrap; gap: 10px; }
+      .admin-header h2 { color: var(--gold); font-size: 1.6rem; }
+      .admin-header.btn { width: auto; padding: 10px 22px; }
+      .admin-teams-row { display: flex; align-items: center; gap: 15px; margin-bottom: 25px; padding: 15px; background: rgba(0,163,166,0.12); border-radius: 8px; border: 1px solid var(--blue-bright); }
+      .admin-teams-row label { color: var(--gold); margin: 0; white-space: nowrap; }
+      .team-count-controls { display: flex; align-items: center; gap: 10px; }
+      .team-count-controls button { background: var(--blue-bright); color: white; border: none; width: 32px; height: 32px; border-radius: 6px; font-size: 1.2rem; cursor: pointer; font-weight: bold; }
+      .team-count-controls button:hover { background: var(--gold); color: var(--blue-dark); }
+        #team-count-display { font-size: 1.4rem; font-weight: bold; color: var(--gold); min-width: 30px; text-align: center; }
+
+      .category-block { margin-bottom: 28px; background: rgba(83,20,126,0.25); border-radius: 10px; padding: 18px; border: 1px solid rgba(194,166,119,0.25); }
+      .category-block h3 { color: var(--gold); margin-bottom: 14px; font-size: 1.1rem; display: flex; align-items: center; gap: 10px; }
+      .cat-name-input { background: #F9F9F9; border: 1px solid var(--blue-bright); color: #2C2C2C; border-radius: 5px; padding: 5px 10px; font-size: 1rem; font-weight: bold; width: 100%; }
+      .cat-name-input:focus { border-color: var(--gold); outline: none; }
+      .question-card { background: #F9F9F9; border: 1px solid #E0E0E0; border-radius: 8px; padding: 14px; margin-bottom: 10px; }
+      .pts-input { width:100px; padding:6px; border-radius:4px; border:1px solid #ccc; margin-bottom:8px; }
+      .question-field { margin-bottom: 8px; }
+      .question-field label { color: #666; font-size: 0.82rem; font-weight: normal; margin-bottom: 4px; }
+      .question-field textarea { height: 60px; font-size: 0.92rem; padding: 8px; }
+
+        #game-screen { display: none; flex-direction: column; gap: 20px; }
+      .board { display: grid; gap: 15px; background-color: #2C2C2C; padding: 15px; border-radius: 8px; border: 3px solid var(--gold); }
+      .cat-header { background-color: var(--blue-classic); color: var(--white); font-weight: bold; text-transform: uppercase; text-align: center; padding: 15px 5px; border: 2px solid var(--blue-bright); font-size: 1.1rem; display: flex; align-items: center; justify-content: center; min-height: 70px; box-shadow: inset 0 0 10px rgba(0,0,0,0.5); }
+      .cell-card { background-color: var(--blue-classic); color: var(--gold); font-size: 1.8rem; font-weight: bold; text-align: center; padding: 25px 10px; border: 2px solid var(--blue-bright); cursor: pointer; user-select: none; transition: all 0.2s ease; box-shadow: inset 0 0 15px rgba(0,0,0,0.5); display: flex; align-items: center; justify-content: center; }
+      .cell-card:hover { background-color: var(--blue-bright); color: var(--white); transform: scale(1.02); }
+      .cell-card.disabled { background-color: #E8E8E8; color: #999; border-color: #CCCCCC; cursor: not-allowed; transform: none; box-shadow: none; }
+
+      .scoreboard { display: flex; justify-content: space-around; flex-wrap: wrap; gap: 15px; margin-top: 10px; padding-top: 15px; border-top: 2px solid rgba(194,166,119,0.3); }
+      .team-score { background: #F9F9F9; border: 2px solid var(--blue-bright); border-radius: 8px; padding: 15px; text-align: center; min-width: 180px; transition: transform 0.3s; }
+      .team-score h3 { color: #2C2C2C; margin-bottom: 5px; font-size: 1.2rem; }
+      .score-val { font-size: 2rem; font-weight: bold; color: var(--gold); margin-bottom: 10px; }
+      .score-ctrls { display: flex; gap: 10px; justify-content: center; }
+      .btn-sm { padding: 6px 12px; font-weight: bold; border: none; border-radius: 4px; cursor: pointer; }
+      .btn-plus { background-color: var(--success); color: white; }
+      .btn-minus { background-color: var(--danger); color: white; }
+
+      .shake { animation: shake 0.5s; }
+        @keyframes shake {
+            0%, 100% { transform: translateX(0); }
+            25% { transform: translateX(-10px); }
+            75% { transform: translateX(10px); }
+        }
+      .win-glow { animation: glow 1s ease-in-out infinite alternate; }
+        @keyframes glow {
+            from { box-shadow: 0 0 5px var(--gold); }
+            to { box-shadow: 0 0 20px var(--gold), 0 0 30px var(--gold); }
+        }
+
+      .modal { display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background-color: rgba(0,0,0,0.6); backdrop-filter: blur(5px); z-index: 1000; align-items: center; justify-content: center; padding: 20px; }
+      .modal-content { background-color: var(--blue-classic); border: 4px solid var(--gold); border-radius: 12px; width: 100%; max-width: 800px; padding: 30px; text-align: center; position: relative; box-shadow: 0 0 30px rgba(194,166,119,0.4); }
+      .modal-points { color: var(--gold); font-size: 1.5rem; font-weight: bold; margin-bottom: 15px; }
+      .modal-clue { font-size: 2rem; line-height: 1.4; margin-bottom: 30px; font-weight: bold; }
+      .modal-answer { font-size: 1.6rem; color: #00A3A6; margin-bottom: 30px; padding: 15px; background: rgba(194,166,119,0.2); border-radius: 6px; display: none; font-style: italic; }
+      .timer-container { width: 100%; background-color: #53147E; height: 14px; border-radius: 7px; margin-bottom: 12px; overflow: hidden; }
+      .timer-bar { width: 100%; height: 100%; background-color: var(--gold); transition: width 1s linear; }
+      .timer-label { font-size: 0.9rem; color: var(--gray); margin-bottom: 20px; }
+      .modal-actions { display: flex; flex-direction: column; gap: 15px; }
+      .modal-row { display: flex; gap: 10px; justify-content: center; flex-wrap: wrap; }
+      .btn-modal { padding: 10px 20px; font-weight: bold; border: none; border-radius: 4px; cursor: pointer; }
+      .btn-reveal { background-color: var(--gold); color: var(--blue-dark); width: 100%; font-size: 1.1rem; }
+      .btn-close { background-color: #53147E; color: white; width: 100%; }
+      .team-assign-btn { background-color: var(--blue-dark); color: white; border: 1px solid var(--blue-bright); padding: 8px 15px; border-radius: 4px; cursor: pointer; }
+      .team-assign-btn:hover { background-color: var(--blue-bright); }
+
+      .cat-emoji { font-size: 4rem; position: fixed; top: 50%; left: 50%; transform: translate(-50%, -50%); z-index: 2000; display: none; animation: pop 1.5s ease-out forwards; }
+        @keyframes pop {
+            0% { transform: translate(-50%, -50%) scale(0); opacity: 0; }
+            20% { transform: translate(-50%, -50%) scale(1.2); opacity: 1; }
+            80% { transform: translate(-50%, -50%) scale(1); opacity: 1; }
+            100% { transform: translate(-50%, -50%) scale(0); opacity: 0; }
+        }
+
+      .confetti { position: fixed; width: 10px; height: 10px; background-color: var(--gold); top: 0; animation: confetti-fall 3s linear forwards; }
+        @keyframes confetti-fall {
+            to { transform: translateY(100vh) rotate(360deg); opacity: 0; }
+        }
+
+      .game-topbar { display: flex; justify-content: flex-end; margin-bottom: 10px; gap: 10px; }
+      .game-topbar button { padding: 15px 25px; font-size: 1.1rem; background-color: #53147E; color: white; border: 1px solid var(--blue-bright); border-radius: 6px; cursor: pointer; transition: all 0.2s ease; font-weight: bold; }
+      .game-topbar button:hover { background-color: var(--gold); color: var(--blue-dark); transform: translateY(-2px); }
+      .game-topbar button:active { background-color: #D4B896; transform: translateY(0); }
+
+        @media (max-width:768px){
+            header h1{font-size:1.8rem;}
+          .cell-card{font-size:1.2rem; padding:15px 5px;}
+          .cat-header{font-size:0.9rem; min-height:50px; padding:10px 5px;}
+          .modal-clue{font-size:1.4rem;}
+          .modal-answer{font-size:1.2rem;}
+          .board{gap:8px; padding:10px;}
+        }
+    </style>
+</head>
+<body>
+
+<header>
+    <h1> JEOPARDY</h1>
+    <p>Juego interactivo</p>
+    <br>
+    <img src="1.cobiet.jpg.jpeg"  width="300" height="200">
+</header>
+
+<div class="container">
+    <div id="setup-screen">
+        <div class="form-group">
+            <label for="api-key">Gemini API Key</label>
+            <input type="password" id="api-key" placeholder="Pega tu API Key de Google AI Studio">
+            <small style="color:var(--gray);display:block;margin-top:5px;">Tu clave no se guarda en ningún servidor.</small>
+        </div>
+        <div class="form-group">
+            <label for="file-input">Cargar Archivo (PDF o TXT)</label>
+            <input type="file" id="file-input" accept=".pdf,.txt">
+        </div>
+        <div class="form-group">
+            <label for="text-input">O pega el texto informativo directamente aquí</label>
+            <textarea id="text-input" placeholder="Si no tienes archivo, pega todo el contenido temático aquí..."></textarea>
+        </div>
+        <button class="btn" id="generate-btn">¡PROCESAR E INICIAR JUEGO!</button>
+        <button class="btn btn-secondary" onclick="cargarJuego()">📂 CONTINUAR JUEGO GUARDADO</button>
+    </div>
+
+    <div id="loading-screen">
+        <div class="spinner"></div>
+        <h2>Leyendo tu documento...</h2>
+        <p style="margin-top:10px;color:var(--gray);">Diseñando categorías, pistas y respuestas.</p>
+    </div>
+
+    <div id="admin-screen">
+        <div class="admin-header">
+            <h2>⚙️ Panel del Administrador</h2>
+            <div>
+                <button class="btn" id="start-game-btn" onclick="iniciarJuego()">▶ INICIAR JUEGO</button>
+                <button class="btn btn-secondary" onclick="guardarJuego()">💾 GUARDAR PROGRESO</button>
+                <button class="btn btn-secondary" onclick="volverSetup()">↩️ VOLVER A INICIO</button>
+            </div>
+        </div>
+
+        <div class="admin-teams-row">
+            <label>Número de equipos:</label>
+            <div class="team-count-controls">
+                <button onclick="cambiarEquipos(-1)">−</button>
+                <span id="team-count-display">3</span>
+                <button onclick="cambiarEquipos(1)">+</button>
+            </div>
+            <small style="color:var(--gray);margin-left:10px;">Mín: 1 &nbsp;|&nbsp; Máx: 8</small>
+        </div>
+
+        <div id="admin-categories"></div>
+    </div>
+
+    <div id="game-screen">
+        <div class="game-topbar">
+            <button onclick="guardarJuego()">💾 Guardar</button>
+            <button onclick="volverAdmin()">⚙️ Panel admin</button>
+            <button onclick="volverSetup()">↩️ Inicio</button>
+        </div>
+        <div class="board" id="board-grid"></div>
+        <div class="scoreboard" id="scoreboard-row"></div>
+    </div>
+</div>
+
+<div class="modal" id="clue-modal">
+    <div class="modal-content">
+        <div class="modal-points" id="modal-title-pts">CATEGORIA - $100</div>
+        <div class="modal-clue" id="modal-clue-text">Pista...</div>
+        <div class="timer-container">
+            <div class="timer-bar" id="modal-timer"></div>
+        </div>
+        <div class="timer-label" id="timer-label">⏱ 20 segundos</div>
+        <div class="modal-answer" id="modal-answer-text"></div>
+        <div class="modal-actions">
+            <button class="btn-modal btn-reveal" id="btn-reveal-ans">REVELAR RESPUESTA CORRECTA</button>
+            <div class="modal-row" style="margin-top:10px;" id="assign-btns-row">
+                <span style="align-self:center;font-weight:bold;">Asignar puntos:</span>
+            </div>
+            <button class="btn-modal btn-close" onclick="closeModal()" style="margin-top:15px;">CERRAR VENTANA</button>
+        </div>
+    </div>
+</div>
+
+<div class="cat-emoji" id="cat-emoji"></div>
+
+<script>
+    pdfjsLib.GlobalWorkerOptions.workerSrc = 'https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.4.120/pdf.worker.min.js';
+
+    const TIMER_SECONDS = 20;
+    const SAVE_KEY = 'jeopardy_save_v1';
+
+    let juegoDatos = null;
+    let activeCardValue = 0;
+    let activeCardElement = null;
+    let timerCountdown = null;
+    let numEquipos = 20;
+    let currentScores = {};
+    let disabledCards = [];
+
+    document.getElementById('generate-btn').addEventListener('click', async () => {
+        const apiKey = document.getElementById('api-key').value.trim();
+        const fileInput = document.getElementById('file-input').files[0];
+        const textInput = document.getElementById('text-input').value.trim();
+
+        if (!apiKey) { alert('Por favor ingresa tu Gemini API Key.'); return; }
+        if (!fileInput &&!textInput) { alert('Por favor carga un archivo PDF/TXT o pega texto descriptivo.'); return; }
+
+        document.getElementById('setup-screen').style.display = 'none';
+        document.getElementById('loading-screen').style.display = 'block';
+
+        try {
+            let textoCompleto = textInput;
+            if (fileInput) {
+                textoCompleto = (fileInput.type === 'application/pdf' || fileInput.name.endsWith('.pdf'))
+                  ? await extraerTextoPDF(fileInput)
+                    : await fileInput.text();
+            }
+            if (!textoCompleto || textoCompleto.trim().length < 20) throw new Error('El texto extraído es demasiado corto o inválido.');
+
+            juegoDatos = await consultarGeminiIA(apiKey, textoCompleto);
+            disabledCards = [];
+
+            document.getElementById('loading-screen').style.display = 'none';
+            mostrarAdmin();
+
+        } catch (error) {
+            alert('Error: ' + error.message);
+            document.getElementById('loading-screen').style.display = 'none';
+            document.getElementById('setup-screen').style.display = 'block';
+        }
+    });
+
+    async function extraerTextoPDF(file) {
+        const arrayBuffer = await file.arrayBuffer();
+        const pdf = await pdfjsLib.getDocument({ data: arrayBuffer }).promise;
+        let texto = '';
+        for (let i = 1; i <= pdf.numPages; i++) {
+            const page = await pdf.getPage(i);
+            const content = await page.getTextContent();
+            texto += content.items.map(it => it.str).join(' ') + '\n';
+        }
+        return texto;
+    }
+
+    async function consultarGeminiIA(apiKey, datosTexto) {
+        const endpoint = `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent?key=${apiKey}`;
+        const prompt = `Genera un juego completo estilo Jeopardy basado estrictamente en la siguiente información de contexto.
+        REGLAS IMPORTANTES:
+        1. Crea exactamente 4 categorías temáticas lógicas basadas en el texto.
+        2. Cada categoría debe poseer exactamente 5 niveles de preguntas con puntajes: 100, 200, 300, 400, 500.
+        3. La "pista" es una afirmación o definición, y la "respuesta" DEBE formularse en forma de pregunta.
+        Devuelve estrictamente un objeto JSON válido.
+
+        Texto de Contexto:
+        ${datosTexto}`;
+
+        const requestBody = {
+            contents: [{ parts: [{ text: prompt }] }],
+            generationConfig: {
+                responseMimeType: 'application/json',
+                responseSchema: {
+                    type: 'OBJECT',
+                    properties: {
+                        categorias: {
+                            type: 'ARRAY',
+                            items: {
+                                type: 'OBJECT',
+                                properties: {
+                                    nombre: { type: 'STRING' },
+                                    preguntas: {
+                                        type: 'ARRAY',
+                                        items: {
+                                            type: 'OBJECT',
+                                            properties: {
+                                                puntos: { type: 'NUMBER' },
+                                                pista: { type: 'STRING' },
+                                                respuesta: { type: 'STRING' }
+                                            },
+                                            required: ['puntos', 'pista', 'respuesta']
+                                        }
+                                    }
+                                },
+                                required: ['nombre', 'preguntas']
+                            }
+                        }
+                    },
+                    required: ['categorias']
+                }
+            }
+        };
+
+        const response = await fetch(endpoint, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(requestBody) });
+        if (!response.ok) {
+            const errData = await response.json();
+            throw new Error(errData.error?.message || 'Error de conexión con Gemini.');
+        }
+        const data = await response.json();
+        const part = data.candidates[0].content.parts[0];
+        if (part.text) {
+            const clean = part.text.replace(/```json|```/g, '').trim();
+            return JSON.parse(clean);
+        }
+        throw new Error('La IA no devolvió texto en la respuesta.');
+    }
+
+    function guardarJuego() {
+        const saveData = {
+            juegoDatos,
+            numEquipos,
+            currentScores,
+            disabledCards
+        };
+        localStorage.setItem(SAVE_KEY, JSON.stringify(saveData));
+        alert('✅ Juego guardado. Puede cerrar y continuar después.');
+    }
+
+function cargarJuego() {
+        const saved = localStorage.getItem(SAVE_KEY);
+        if (!saved) { alert('No hay juego guardado.'); return; }
+
+        const data = JSON.parse(saved);
+        juegoDatos = data.juegoDatos;
+        numEquipos = data.numEquipos;
+        currentScores = data.currentScores;
+        disabledCards = data.disabledCards || [];
+
+        document.getElementById('setup-screen').style.display = 'none';
+        mostrarAdmin();
+    }
+
+    function mostrarAdmin() {
+        document.getElementById('team-count-display').textContent = numEquipos;
+        renderizarAdmin();
+        document.getElementById('admin-screen').style.display = 'block';
+    }
+
+    function cambiarEquipos(delta) {
+        numEquipos = Math.min(20, Math.max(1, numEquipos + delta));
+        document.getElementById('team-count-display').textContent = numEquipos;
+    }
+
+    function renderizarAdmin() {
+        const container = document.getElementById('admin-categories');
+        container.innerHTML = '';
+
+        juegoDatos.categorias.forEach((cat, catIdx) => {
+            const block = document.createElement('div');
+            block.className = 'category-block';
+
+            block.innerHTML = `
+                <h3>
+                    📂 Categoría ${catIdx + 1}:
+                    <input class="cat-name-input" data-cat="${catIdx}" value="${escHtml(cat.nombre)}" placeholder="Nombre de categoría">
+                </h3>
+                <div id="preguntas-cat-${catIdx}"></div>
+            `;
+
+            block.querySelector('.cat-name-input').addEventListener('input', e => {
+                juegoDatos.categorias[catIdx].nombre = e.target.value;
+            });
+
+            const pregContainer = block.querySelector(`#preguntas-cat-${catIdx}`);
+            cat.preguntas.forEach((preg, pIdx) => {
+                const qCard = document.createElement('div');
+                qCard.className = 'question-card';
+                qCard.innerHTML = `
+                    <div class="question-field">
+                        <label>Puntos - Asigna según importancia</label>
+                        <input type="number" class="pts-input" data-cat="${catIdx}" data-preg="${pIdx}" value="${preg.puntos}" min="50" step="50">
+                    </div>
+                    <div class="question-field">
+                        <label>Pista</label>
+                        <textarea data-cat="${catIdx}" data-preg="${pIdx}" data-field="pista">${escHtml(preg.pista)}</textarea>
+                    </div>
+                    <div class="question-field">
+                        <label>Respuesta</label>
+                        <textarea data-cat="${catIdx}" data-preg="${pIdx}" data-field="respuesta">${escHtml(preg.respuesta)}</textarea>
+                    </div>
+                `;
+
+                qCard.querySelector('.pts-input').addEventListener('input', e => {
+                    const c = +e.target.dataset.cat;
+                    const p = +e.target.dataset.preg;
+                    juegoDatos.categorias[c].preguntas[p].puntos = parseInt(e.target.value) || 100;
+                });
+
+                qCard.querySelectorAll('textarea').forEach(ta => {
+                    ta.addEventListener('input', e => {
+                        const c = +e.target.dataset.cat;
+                        const p = +e.target.dataset.preg;
+                        const f = e.target.dataset.field;
+                        juegoDatos.categorias[c].preguntas[p][f] = e.target.value;
+                    });
+                });
+                pregContainer.appendChild(qCard);
+            });
+
+            container.appendChild(block);
+        });
+    }
+
+    function escHtml(str) {
+        return String(str).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
+    }
+
+    function iniciarJuego() {
+        if (!currentScores[1]) {
+            currentScores = {};
+            for (let i = 1; i <= numEquipos; i++) currentScores[i] = 0;
+        }
+
+        renderizarTablero();
+        renderizarMarcador();
+
+        document.getElementById('admin-screen').style.display = 'none';
+        document.getElementById('game-screen').style.display = 'flex';
+    }
+
+    function volverAdmin() {
+        document.getElementById('game-screen').style.display = 'none';
+        document.getElementById('admin-screen').style.display = 'block';
+    }
+
+    function volverSetup() {
+        document.getElementById('setup-screen').style.display = 'block';
+        document.getElementById('admin-screen').style.display = 'none';
+        document.getElementById('game-screen').style.display = 'none';
+        closeModal();
+    }
+
+    function renderizarTablero() {
+        const grid = document.getElementById('board-grid');
+        grid.innerHTML = '';
+        const numCats = juegoDatos.categorias.length;
+        grid.style.gridTemplateColumns = `repeat(${numCats}, 1fr)`;
+
+        juegoDatos.categorias.forEach(cat => {
+            const header = document.createElement('div');
+            header.className = 'cat-header';
+            header.innerText = cat.nombre;
+            grid.appendChild(header);
+        });
+
+        const filas = 5;
+        for (let i = 0; i < filas; i++) {
+            juegoDatos.categorias.forEach((cat, catIdx) => {
+                const itemPregunta = (cat.preguntas && cat.preguntas[i])
+                  ? cat.preguntas[i]
+                    : { puntos: 100, pista: 'Sin pregunta', respuesta: 'Sin respuesta' };
+
+                const card = document.createElement('div');
+                card.className = 'cell-card';
+                card.dataset.id = `${catIdx}-${i}`;
+                card.innerText = `$${itemPregunta.puntos}`;
+
+                if (disabledCards.includes(card.dataset.id)) {
+                    card.classList.add('disabled');
+                }
+
+                card.onclick = () => {
+                    if (!card.classList.contains('disabled')) abrirPregunta(cat.nombre, itemPregunta, card);
+                };
+                grid.appendChild(card);
+            });
+        }
+    }
+
+    function renderizarMarcador() {
+        const row = document.getElementById('scoreboard-row');
+        row.innerHTML = '';
+        for (let i = 1; i <= numEquipos; i++) {
+            const div = document.createElement('div');
+            div.className = 'team-score';
+            div.id = `team-${i}`;
+            div.innerHTML = `
+                <h3 contenteditable="true">EQUIPO ${i}</h3>
+                <div class="score-val" id="score-team-${i}">${currentScores[i] || 0}</div>
+                <div class="score-ctrls">
+                    <button class="btn-sm btn-plus" onclick="adjustScore(${i}, 100)">+100</button>
+                    <button class="btn-sm btn-minus" onclick="adjustScore(${i}, -100)">-100</button>
+                </div>
+            `;
+            row.appendChild(div);
+        }
+    }
+
+    function abrirPregunta(catNombre, pregunta, elementoCard) {
+        activeCardValue = pregunta.puntos;
+        activeCardElement = elementoCard;
+
+        document.getElementById('modal-title-pts').innerText = `${catNombre.toUpperCase()} - $${pregunta.puntos}`;
+        document.getElementById('modal-clue-text').innerText = pregunta.pista;
+
+        const ansBox = document.getElementById('modal-answer-text');
+        ansBox.innerText = pregunta.respuesta;
+        ansBox.style.display = 'none';
+
+        const assignRow = document.getElementById('assign-btns-row');
+        assignRow.innerHTML = '<span style="align-self:center;font-weight:bold;">Asignar puntos:</span>';
+        for (let i = 1; i <= numEquipos; i++) {
+            const btn = document.createElement('button');
+            btn.className = 'team-assign-btn';
+            btn.textContent = `Eq ${i}`;
+            btn.onclick = () => assignCardPoints(i);
+            assignRow.appendChild(btn);
+        }
+        const nadieBtn = document.createElement('button');
+        nadieBtn.className = 'team-assign-btn';
+        nadieBtn.style.background = '#4a5568';
+        nadieBtn.textContent = 'Nadie';
+        nadieBtn.onclick = () => { showCat('😿'); closeModal(); };
+        assignRow.appendChild(nadieBtn);
+
+        document.getElementById('clue-modal').style.display = 'flex';
+
+        const timerBar = document.getElementById('modal-timer');
+        const timerLbl = document.getElementById('timer-label');
+        timerBar.style.transition = 'none';
+        timerBar.style.width = '100%';
+        timerBar.style.backgroundColor = 'var(--gold)';
+        timerBar.offsetHeight;
+
+        timerBar.style.transition = `width ${TIMER_SECONDS}s linear`;
+        timerBar.style.width = '0%';
+
+        if (timerCountdown) clearInterval(timerCountdown);
+
+        let segs = TIMER_SECONDS;
+        timerLbl.textContent = `⏱ ${segs} segundos`;
+
+        timerCountdown = setInterval(() => {
+            segs--;
+            timerLbl.textContent = `⏱ ${segs} segundos`;
+            if (segs <= 5) timerBar.style.backgroundColor = 'var(--danger)';
+            if (segs <= 0) {
+                clearInterval(timerCountdown);
+                timerLbl.textContent = '⏱ ¡Tiempo agotado!';
+            }
+        }, 1000);
+
+        document.getElementById('btn-reveal-ans').onclick = () => {
+            ansBox.style.display = 'block';
+            clearInterval(timerCountdown);
+        };
+    }
+
+    function closeModal() {
+        document.getElementById('clue-modal').style.display = 'none';
+        clearInterval(timerCountdown);
+    }
+
+    function assignCardPoints(teamId) {
+        const puntos = activeCardValue;
+        adjustScore(teamId, puntos);
+        showCat(puntos > 0? '😸' : '😿');
+
+        if (activeCardElement) {
+            activeCardElement.classList.add('disabled');
+            disabledCards.push(activeCardElement.dataset.id);
+        }
+
+        closeModal();
+    }
+
+    function adjustScore(teamId, cantidad) {
+        const prevScore = currentScores[teamId] || 0;
+        currentScores[teamId] = prevScore + cantidad;
+        const el = document.getElementById(`score-team-${teamId}`);
+        const teamDiv = document.getElementById(`team-${teamId}`);
+
+        if (el) {
+            el.innerText = currentScores[teamId];
+            el.style.color = currentScores[teamId] < 0? 'var(--danger)' : 'var(--gold)';
+
+            if (cantidad > 0) {
+                teamDiv.classList.add('win-glow');
+                createConfetti();
+                setTimeout(() => teamDiv.classList.remove('win-glow'), 2000);
+            } else if (cantidad < 0) {
+                teamDiv.classList.add('shake');
+                setTimeout(() => teamDiv.classList.remove('shake'), 500);
+            }
+        }
+    }
+
+    function showCat(emoji) {
+        const catEl = document.getElementById('cat-emoji');
+        catEl.textContent = emoji;
+        catEl.style.display = 'block';
+        setTimeout(() => catEl.style.display = 'none', 1500);
+    }
+
+    function createConfetti() {
+        for (let i = 0; i < 50; i++) {
+            const confetti = document.createElement('div');
+            confetti.className = 'confetti';
+            confetti.style.left = Math.random() * 100 + 'vw';
+            confetti.style.backgroundColor = `hsl(${Math.random() * 360}, 70%, 50%)`;
+            confetti.style.animationDelay = Math.random() * 0.5 + 's';
+            document.body.appendChild(confetti);
+            setTimeout(() => confetti.remove(), 3000);
+        }
+    }
+</script>
+</body>
+</html>
