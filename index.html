@@ -870,6 +870,28 @@
             margin-bottom: 20px;
         }
 
+        .rival-timer-container {
+            width: 100%;
+            background-color: #2d3748;
+            height: 14px;
+            border-radius: 7px;
+            margin-bottom: 8px;
+            overflow: hidden;
+        }
+
+        .rival-timer-bar {
+            width: 100%;
+            height: 100%;
+            background-color: var(--rival-accent);
+            transition: width 1s linear;
+        }
+
+        .rival-timer-label {
+            font-size: 0.9rem;
+            color: var(--gray);
+            margin-bottom: 16px;
+        }
+
         .rival-options {
             display: grid;
             grid-template-columns: 1fr 1fr;
@@ -1085,6 +1107,97 @@
             cursor: pointer;
         }
 
+        /* ── VENTANA FLOTANTE DE REGLAS ── */
+        .reglas-overlay {
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0, 0, 0, 0.93);
+            z-index: 3000;
+            align-items: center;
+            justify-content: center;
+            padding: 20px;
+        }
+
+        .reglas-overlay.show {
+            display: flex;
+        }
+
+        .reglas-content {
+            background-color: var(--blue-classic);
+            border: 4px solid var(--gold);
+            border-radius: 12px;
+            width: 100%;
+            max-width: 620px;
+            padding: 30px;
+            text-align: left;
+            box-shadow: 0 0 30px rgba(241, 181, 4, 0.4);
+            max-height: 85vh;
+            overflow-y: auto;
+        }
+
+        .reglas-content.rival-theme {
+            background-color: #1a0505;
+            border-color: var(--rival-accent);
+            box-shadow: 0 0 30px rgba(192, 57, 43, 0.4);
+        }
+
+        .reglas-content h2 {
+            text-align: center;
+            margin-bottom: 18px;
+            color: var(--gold);
+        }
+
+        .reglas-content.rival-theme h2 {
+            color: #ff6b6b;
+        }
+
+        .reglas-content ul {
+            margin: 0 0 26px 20px;
+            line-height: 1.7;
+        }
+
+        .reglas-content li {
+            margin-bottom: 8px;
+        }
+
+        .reglas-botones {
+            display: flex;
+            gap: 12px;
+            justify-content: center;
+            flex-wrap: wrap;
+        }
+
+        .reglas-btn-comenzar {
+            background: var(--gold);
+            color: var(--blue-dark);
+            border: none;
+            padding: 14px 28px;
+            border-radius: 8px;
+            font-size: 1.05rem;
+            font-weight: bold;
+            cursor: pointer;
+        }
+
+        .reglas-content.rival-theme .reglas-btn-comenzar {
+            background: var(--rival-accent);
+            color: white;
+        }
+
+        .reglas-btn-cancelar {
+            background: #4a5568;
+            color: white;
+            border: none;
+            padding: 14px 28px;
+            border-radius: 8px;
+            font-size: 1.05rem;
+            font-weight: bold;
+            cursor: pointer;
+        }
+
         /* Cadena en rival */
         .cadena-row {
             display: flex;
@@ -1170,7 +1283,7 @@
             color: white;
             line-height: 1;
             margin-bottom: 18px;
-            text-shadow: 0 0 40px rgba(255,255,255,0.2);
+            text-shadow: 0 0 40px rgba(255, 255, 255, 0.2);
         }
 
         .nr-info {
@@ -1252,7 +1365,7 @@
                 </div>
                 <div class="game-card rival" onclick="seleccionarJuego('rival')">
                     <div class="game-icon">🔴</div>
-                    <h2>EL RIVAL MÁS DÉBIL</h2>
+                    <h2>EL ÚLTIMO DILEMA</h2>
                     <p>Rondas dinámicas adaptativas según aforo. Soporta hasta 40 jugadores con un sistema inteligente
                         de descarte automático por fallas.</p>
                     <span class="select-btn">¡Jugar El Rival!</span>
@@ -1293,8 +1406,8 @@
         <div id="admin-screen">
             <div class="admin-header">
                 <h2>⚙️ Panel del Administrador — Jeopardy</h2>
-                <button class="btn" onclick="iniciarJuego()">▶ INICIAR JUEGO</button>
-                
+                <button class="btn" onclick="mostrarReglas('jeopardy')">▶ INICIAR JUEGO</button>
+
             </div>
             <div class="admin-teams-row">
                 <label>Número de equipos:</label>
@@ -1331,8 +1444,8 @@
                 <small style="color:var(--gray);margin-left:10px;">Mín: 3 | Máx: 40</small>
             </div>
             <div id="rival-player-names-list" style="margin-bottom:24px;"></div>
-            <div style="text-align:right;"> 
-                 
+            <div style="text-align:right;">
+
             </div>
         </div>
 
@@ -1341,36 +1454,44 @@
             <div class="admin-header">
                 <h2>📋 Paso 2 — Preguntas generadas</h2>
                 <div style="display:flex;gap:10px;flex-wrap:wrap;">
-                    <button class="btn" style="background:#4a5568;color:white;width:auto;padding:10px 20px;" onclick="volverAJugadoresRival()">◀ Volver</button>
-                    <button class="btn rival-btn" onclick="iniciarRival()">▶ INICIAR JUEGO</button>
+                    <button class="btn" style="background:#4a5568;color:white;width:auto;padding:10px 20px;"
+                        onclick="volverAJugadoresRival()">◀ Volver</button>
+                    <button class="btn rival-btn" onclick="mostrarReglas('rival')">▶ INICIAR JUEGO</button>
                 </div>
             </div>
-            <div id="rival-resumen-config" style="background:rgba(139,0,0,0.2);border:1px solid #8b0000;border-radius:8px;padding:14px;margin-bottom:20px;color:var(--gray);font-size:0.95rem;"></div>
+            <div id="rival-resumen-config"
+                style="background:rgba(139,0,0,0.2);border:1px solid #8b0000;border-radius:8px;padding:14px;margin-bottom:20px;color:var(--gray);font-size:0.95rem;">
+            </div>
             <div id="admin-rival-questions"></div>
             <div style="text-align:right;margin-top:16px;">
-                <button class="btn rival-btn" style="width:auto;padding:12px 32px;" onclick="iniciarRival()">▶ INICIAR JUEGO</button>
+                <button class="btn rival-btn" style="width:auto;padding:12px 32px;" onclick="mostrarReglas('rival')">▶
+                    INICIAR JUEGO</button>
             </div>
         </div>
 
         <div id="rival-screen">
             <div class="rival-header">
-                <h2>🔴 EL RIVAL MÁS DÉBIL</h2>
-                <div style="display:none;"></div> 
+                <h2>🔴 EL ÚLTIMO DILEMA</h2>
+                <div style="display:none;"></div>
                 <div class="rival-ronda-info">
                     Ronda <strong id="rival-ronda-num">1</strong><br>
                     Pregunta <strong id="rival-q-num-disp">1</strong> / <strong id="rival-q-total">—</strong>
                 </div>
             </div>
             <div class="rival-body">
-                
+
                 <div class="rival-players" id="rival-players-row"></div>
                 <div class="rival-question-box" id="rival-q-box">
                     <div class="rival-q-num" id="rival-q-label">PREGUNTA 1</div>
                     <div class="rival-q-text" id="rival-q-text">—</div>
+                    <div class="rival-timer-container">
+                        <div class="rival-timer-bar" id="rival-timer-bar"></div>
+                    </div>
+                    <div class="rival-timer-label" id="rival-timer-label">⏱ 45 segundos</div>
                     <div class="rival-options" id="rival-q-options"></div>
                 </div>
                 <div class="rival-admin-controls">
-                    
+
                     <button class="rival-ctrl-btn btn-correcto" onclick="rivalRespuesta(true)">✓ CORRECTO</button>
                     <button class="rival-ctrl-btn btn-incorrecto" onclick="rivalRespuesta(false)">✗ INCORRECTO</button>
                     <button class="rival-ctrl-btn btn-sig-turno" id="btn-sig-turno" onclick="rivalSiguienteTurno()"
@@ -1409,18 +1530,57 @@
     <div class="winner-overlay" id="winner-overlay">
         <div class="winner-title">🏆 ¡GANADOR INDISCUTIBLE DE BIOÉTICA!</div>
         <div class="winner-name" id="winner-name-display">—</div>
-        
+
         <button class="winner-restart" onclick="location.reload()">JUGAR DE NUEVO</button>
     </div>
 
     <div class="nueva-ronda-overlay" id="nueva-ronda-overlay">
-        <div class="nr-badge">⚔️ El Rival Más Débil</div>
+        <div class="nr-badge">⚔️ E lúltimo dilema</div>
         <div class="nr-titulo">RONDA</div>
         <div class="nr-numero" id="nr-numero-display">2</div>
         <div class="nr-info">Quedan <span id="nr-activos-count">—</span> participantes en juego</div>
         <div class="nr-info">Preguntas en esta ronda: <span id="nr-preguntas-obj">—</span></div>
         <div class="nr-activos" id="nr-activos-lista"></div>
         <button class="nr-continuar" onclick="cerrarNuevaRonda()">▶ COMENZAR RONDA</button>
+    </div>
+
+    <div class="reglas-overlay" id="reglas-jeopardy-overlay">
+        <div class="reglas-content">
+            <h2>🎯 Reglas de Jeopardy</h2>
+            <ul>
+                <li>Cada equipo elige por turnos una casilla del tablero según su valor en puntos.</li>
+                <li>El administrador lee la pista en voz alta y activa el cronómetro de 30 segundos.</li>
+                <li>Si el equipo responde correctamente antes de que se agote el tiempo, se le asignan los puntos de la
+                    casilla.</li>
+                <li>Si nadie responde o el tiempo se agota, la casilla puede marcarse como "Nadie" sin otorgar puntos.
+                </li>
+                <li>Gana el equipo con más puntos al finalizar todas las categorías.</li>
+            </ul>
+            <div class="reglas-botones">
+                <button class="reglas-btn-cancelar" onclick="cerrarReglas('jeopardy')">Cancelar</button>
+                <button class="reglas-btn-comenzar" onclick="confirmarInicioDesdeReglas('jeopardy')">Entendido,
+                    ¡Comenzar! ▶</button>
+            </div>
+        </div>
+    </div>
+
+    <div class="reglas-overlay" id="reglas-rival-overlay">
+        <div class="reglas-content rival-theme">
+            <h2>🔴 Reglas de El Último Dilema</h2>
+            <ul>
+                <li>Los participantes responden preguntas por turnos, en el orden mostrado en pantalla.</li>
+                <li>Cada pregunta tiene un límite de 45 segundos; si se agota el tiempo, se marca automáticamente como
+                    incorrecta.</li>
+                <li>Cada falla acumulada acerca al participante a la eliminación automática del circuito.</li>
+                <li>Al finalizar cada ronda, el número de preguntas por jugador aumenta.</li>
+                <li>Gana el último participante que quede activo.</li>
+            </ul>
+            <div class="reglas-botones">
+                <button class="reglas-btn-cancelar" onclick="cerrarReglas('rival')">Cancelar</button>
+                <button class="reglas-btn-comenzar" onclick="confirmarInicioDesdeReglas('rival')">Entendido, ¡Comenzar!
+                    ▶</button>
+            </div>
+        </div>
     </div>
 
     <script>
@@ -1443,17 +1603,20 @@
         let rivalTurnoIdx = 0;
         let rivalRonda = 1;
 
-        
-        
+
+
         let rivalQIdx = 0;
         let rivalRespuestaRevelada = false;
         let rivalPreguntas = [];
+        const RIVAL_TIMER_SECONDS = 45;
+        let rivalTimerCountdown = null;
         let vueltasDeRondaActual = 0;
         let preguntasRespondidasEnEsteCiclo = 0;
         let preguntasObjetivoRonda = 0;
 
         window.addEventListener('DOMContentLoaded', () => {
             inyectarEstilosGatitos();
+
             if (localStorage.getItem('cobiet_savegame') && localStorage.getItem('cobiet_juegodatos')) {
                 const btnResume = document.getElementById('btn-resume-game');
                 btnResume.style.display = 'block';
@@ -1461,11 +1624,45 @@
             }
         });
 
+        // ════════════════════════════════════════
+        //  REGLAS E INICIO DEL JUEGO (misma pestaña)
+        // ════════════════════════════════════════
+        function mostrarReglas(modo) {
+            const overlayId = modo === 'jeopardy' ? 'reglas-jeopardy-overlay' : 'reglas-rival-overlay';
+            document.getElementById(overlayId).classList.add('show');
+        }
+
+        function cerrarReglas(modo) {
+            const overlayId = modo === 'jeopardy' ? 'reglas-jeopardy-overlay' : 'reglas-rival-overlay';
+            document.getElementById(overlayId).classList.remove('show');
+        }
+
+        function confirmarInicioDesdeReglas(modo) {
+            cerrarReglas(modo);
+            if (modo === 'jeopardy') {
+                iniciarJuego();
+            } else {
+                iniciarRival();
+            }
+        }
+
+        // Oculta cualquier pantalla de configuración/admin que no sea el juego en sí
+        // y lleva el scroll al inicio para que la interfaz del juego se vea completa.
+        function mostrarSoloInterfazDeJuego(pantallaActivaId) {
+            ['game-selector', 'setup-screen', 'loading-screen', 'admin-screen',
+                'admin-rival-screen', 'admin-rival-preguntas-screen', 'game-screen', 'rival-screen']
+                .forEach(id => {
+                    const el = document.getElementById(id);
+                    if (el) el.style.display = (id === pantallaActivaId) ? (id === 'game-screen' || id === 'rival-screen' ? 'flex' : 'block') : 'none';
+                });
+            window.scrollTo({ top: 0, behavior: 'instant' });
+        }
+
         function seleccionarJuego(modo) {
             modoJuego = modo;
             document.getElementById('game-selector').style.display = 'none';
             const lbl = document.getElementById('setup-game-label');
-            lbl.textContent = modo === 'jeopardy' ? '🎯 Modo: Jeopardy' : '🔴 Modo: El Rival Más Débil (Hasta 40 Jugadores)';
+            lbl.textContent = modo === 'jeopardy' ? '🎯 Modo: Jeopardy' : '🔴 Modo: El Último Dilema (Hasta 40 Jugadores)';
             const btn = document.getElementById('generate-btn');
             btn.className = modo === 'rival' ? 'btn rival-btn' : 'btn';
             document.getElementById('setup-screen').style.display = 'block';
@@ -1580,7 +1777,7 @@
             const endpoint = `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent?key=${apiKey}`;
 
             // Reducimos a 60 preguntas para evitar quedarse sin preguntas con muchos jugadores
-            const prompt = `Genera preguntas para el juego "El Rival Más Débil" basadas en el siguiente texto.\n` +
+            const prompt = `Genera preguntas para el juego "El último dilema" basadas en el siguiente texto.\n` +
                 `REGLAS:\n- Genera exactamente 60 preguntas de opción múltiple basadas estrictamente en el texto.\n` +
                 `- Cada pregunta tiene un enunciado y exactamente 4 opciones (A, B, C, D).\n` +
                 `- Solo UNA opción es correcta. Indica cuál con el campo "correcta" que debe ser "A", "B", "C" o "D".\n` +
@@ -1732,7 +1929,7 @@
                     input.value = `Participante ${i + 1}`;
                 }
             }
-        } 
+        }
 
 
         function renderizarNombresRival() {
@@ -1841,7 +2038,7 @@
                 rivalNumJugadores = save.rivalNumJugadores;
                 rivalTurnoIdx = save.rivalTurnoIdx;
                 rivalRonda = save.rivalRonda;
-            
+
                 rivalQIdx = save.rivalQIdx;
                 preguntasRespondidasEnEsteCiclo = save.preguntasRespondidasEnEsteCiclo || 0;
                 preguntasObjetivoRonda = save.preguntasObjetivoRonda || (rivalNumJugadores > 15 ? rivalNumJugadores : rivalNumJugadores * 2);
@@ -1859,8 +2056,7 @@
             }
             renderizarTablero();
             renderizarMarcador();
-            document.getElementById('admin-screen').style.display = 'none';
-            document.getElementById('game-screen').style.display = 'flex';
+            mostrarSoloInterfazDeJuego('game-screen');
         }
 
         function renderizarTablero() {
@@ -1880,7 +2076,7 @@
                     const card = document.createElement('div');
                     card.className = 'cell-card';
                     card.innerText = `${puntos}`;
-                    card.onclick = () => {abrirPregunta(cat.nombre, preg, card);};
+                    card.onclick = () => { abrirPregunta(cat.nombre, preg, card); };
                     grid.appendChild(card);
                 });
             });
@@ -1901,12 +2097,12 @@
                 row.appendChild(div);
             }
         }
-       
+
         function abrirPregunta(catNombre, pregunta, elementoCard) {
             if (!elementoCard.dataset.usada) {
                 elementoCard.dataset.usada = true;
                 elementoCard.classList.add('disabled');
-            } 
+            }
             activeCardValue = pregunta.puntos;
             document.getElementById('modal-title-pts').innerText = `${catNombre.toUpperCase()} — ${pregunta.puntos}`;
             document.getElementById('modal-clue-text').innerText = pregunta.pista;
@@ -1915,9 +2111,9 @@
             ansBox.style.display = 'none';
 
             const assignRow = document.getElementById('assign-btns-row');
-            if(elementoCard.dataset.usada==="true" && elementoCard.dataset.puntosAsignados==="true"){
+            if (elementoCard.dataset.usada === "true" && elementoCard.dataset.puntosAsignados === "true") {
                 assignRow.innerHTML = '<div style="color:·ffca28;font-weight:bold;">Pregunta ya utilizada. Solo modo consulta</div>';
-              
+
             } else {
                 assignRow.innerHTML = '<span style="align-self:center;font-weight:bold;">Asignar puntos:</span>';
             }
@@ -1939,7 +2135,7 @@
                     closeModal();
                 }, 1200);
             };
-            assignRow.appendChild(nadieBtn); 
+            assignRow.appendChild(nadieBtn);
 
 
             document.getElementById('clue-modal').style.display = 'flex';
@@ -1972,16 +2168,17 @@
             clearInterval(timerInterval);
             clearInterval(timerCountdown);
         }
-        function assignCardPoints(teamId) { 
+        function assignCardPoints(teamId) {
             const card = document.querySelector('.cell-card.disabled:not([data-puntosAsignados])');
 
-            if (card) {card.dataset.puntosAsignados = "true";
-            }   
+            if (card) {
+                card.dataset.puntosAsignados = "true";
+            }
 
             lanzarAnimacionGatito(true);
-            adjustScore(teamId, activeCardValue); 
+            adjustScore(teamId, activeCardValue);
             setTimeout(() => {
-             closeModal(); 
+                closeModal();
             }, 1200); // Duración de la animación del gatito
         }
         function adjustScore(teamId, cantidad) {
@@ -1994,7 +2191,7 @@
         // ════════════════════════════════════════
         //  EL RIVAL MÁS DÉBIL — TOTALMENTE ADAPTADO
         // ════════════════════════════════════════
-        function iniciarRival() {
+        function prepararJugadoresRival() {
             if (rivalJugadores.length === 0) {
                 for (let i = 0; i < rivalNumJugadores; i++) {
                     const input = document.getElementById(`rp-name-${i}`);
@@ -2009,13 +2206,16 @@
                     });
                 }
             }
+        }
+
+        function iniciarRival() {
+            prepararJugadoresRival();
 
             preguntasRespondidasEnEsteCiclo = 0;
 
             preguntasObjetivoRonda = calcularObjetivoRonda(jugadoresActivos().length);
 
-            document.getElementById('admin-rival-screen').style.display = 'none';
-            document.getElementById('rival-screen').style.display = 'flex';
+            mostrarSoloInterfazDeJuego('rival-screen');
 
             renderizarRival();
         }
@@ -2080,9 +2280,74 @@
             }
 
             document.getElementById('btn-sig-turno').style.display = rivalRespuestaRevelada ? 'inline-block' : 'none';
+
+            // Iniciar el cronómetro de 45 segundos para la pregunta que se acaba de mostrar
+            if (rivalQIdx < rivalPreguntas.length && !rivalRespuestaRevelada && jugadoresActivos().length > 0) {
+                iniciarTimerRival();
+            } else {
+                detenerTimerRival();
+            }
+        }
+
+        function iniciarTimerRival() {
+            const timerBar = document.getElementById('rival-timer-bar');
+            const timerLbl = document.getElementById('rival-timer-label');
+            if (!timerBar || !timerLbl) return;
+
+            detenerTimerRival();
+
+            timerBar.style.transition = 'none';
+            timerBar.style.width = '100%';
+            timerBar.style.backgroundColor = 'var(--rival-accent)';
+            timerBar.offsetHeight;
+            timerBar.style.transition = `width ${RIVAL_TIMER_SECONDS}s linear`;
+            timerBar.style.width = '0%';
+
+            let segs = RIVAL_TIMER_SECONDS;
+            timerLbl.textContent = `⏱ ${segs} segundos`;
+
+            rivalTimerCountdown = setInterval(() => {
+                segs--;
+                timerLbl.textContent = `⏱ ${segs} segundos`;
+                if (segs <= 10) timerBar.style.backgroundColor = 'var(--danger)';
+                if (segs <= 0) {
+                    clearInterval(rivalTimerCountdown);
+                    rivalTimerCountdown = null;
+                    timerLbl.textContent = '⏱ ¡Tiempo agotado!';
+                    rivalTiempoAgotado();
+                }
+            }, 1000);
+        }
+
+        function detenerTimerRival() {
+            if (rivalTimerCountdown) {
+                clearInterval(rivalTimerCountdown);
+                rivalTimerCountdown = null;
+            }
+        }
+
+        function rivalTiempoAgotado() {
+            // Si ya se respondió manualmente justo antes de que se agotara el tiempo, no hacer nada
+            if (rivalRespuestaRevelada) return;
+            if (rivalQIdx >= rivalPreguntas.length) return;
+
+            // Mostrar visualmente cuál era la opción correcta
+            const q = rivalPreguntas[rivalQIdx];
+            const optEl = document.getElementById('rival-q-options');
+            if (optEl) {
+                Array.from(optEl.children).forEach((btn, i) => {
+                    const letra = ['A', 'B', 'C', 'D'][i];
+                    btn.disabled = true;
+                    if (letra === q.correcta) btn.classList.add('correct');
+                });
+            }
+
+            // Se marca automáticamente como incorrecto por agotar el tiempo
+            rivalRespuesta(false);
         }
 
         function mostrarRespuestaRival(letraElegida) {
+            detenerTimerRival();
             rivalRespuestaRevelada = true;
             const q = rivalPreguntas[rivalQIdx];
             const optEl = document.getElementById('rival-q-options');
@@ -2095,8 +2360,9 @@
             document.getElementById('btn-sig-turno').style.display = 'inline-block';
         }
 
-        
+
         function rivalRespuesta(correcto) {
+            detenerTimerRival();
             const activos = jugadoresActivos();
             if (activos.length === 0) return;
 
@@ -2108,32 +2374,33 @@
 
             if (correcto) {
                 jugadorActual.correcto++;
-                
+
             } else {
                 jugadorActual.incorrecto++;
                 jugadorActual.fallasEnRonda++;
-                
+
             }
 
             rivalRespuestaRevelada = false;
-               // Esperar a que termine la animación
+            // Esperar a que termine la animación
             setTimeout(() => {
-             rivalQIdx++;
-             preguntasRespondidasEnEsteCiclo++;
+                rivalQIdx++;
+                preguntasRespondidasEnEsteCiclo++;
 
-            // Evaluar descarte automático inmediato según aforo inicial configurado
-             let limiteFallas = rivalNumJugadores > 15 ? 1 : 2;
-             if (jugadorActual.fallasEnRonda >= limiteFallas) {
-                ejecutarDescarteAutomatico(jugadorActual, limiteFallas);
-                return;
-             }
+                // Evaluar descarte automático inmediato según aforo inicial configurado
+                let limiteFallas = rivalNumJugadores > 15 ? 1 : 2;
+                if (jugadorActual.fallasEnRonda >= limiteFallas) {
+                    ejecutarDescarteAutomatico(jugadorActual, limiteFallas);
+                    return;
+                }
 
-            pasarAlSiguienteTurnoNormal();
-        }, 1700); // Duración de la animación del gatito
+                pasarAlSiguienteTurnoNormal();
+            }, 1700); // Duración de la animación del gatito
         }
 
         function rivalSiguienteTurno() {
             // Si el moderador decide saltar o forzar con el botón físico "Siguiente Turno"
+            detenerTimerRival();
             rivalRespuestaRevelada = false;
             pasarAlSiguienteTurnoNormal();
         }
@@ -2274,7 +2541,7 @@
         // ════════════════════════════════════════
         //  MOTOR DE ANIMACIONES GATITOS
         // ════════════════════════════════════════
-        
+
         function inyectarEstilosGatitos() {
             if (document.getElementById('kitty-styles')) return;
             const style = document.createElement('style');
